@@ -1,0 +1,178 @@
+<!-- シンプルな単語帳アプリ（フロント：HTML + JS） -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>単語帳アプリ</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 20px; }
+    .word { font-size: 28px; margin: 20px; }
+    .meaning { font-size: 20px; color: gray; margin: 10px; }
+    button { margin: 10px; padding: 10px 20px; font-size: 16px; }
+  </style>
+</head>
+<body>
+
+<h1>単語帳</h1>
+
+<div class="word" id="word"></div>
+<div class="meaning" id="meaning"></div>
+
+<button onclick="showMeaning()">意味を見る</button><br>
+<button onclick="markCorrect()">できた</button>
+<button onclick="markWrong()">できなかった</button>
+
+<hr>
+<h3>単語追加</h3>
+<input type="text" id="newWord" placeholder="単語">
+<input type="text" id="newMeaning" placeholder="意味">
+<button onclick="addWord()">追加</button>
+
+<script>
+let words = JSON.parse(localStorage.getItem('words')) || [
+  { word: "apple", meaning: "りんご" },
+  { word: "book", meaning: "本" }
+];
+
+let index = 0;
+let wrongList = JSON.parse(localStorage.getItem('wrongList')) || [];
+
+function save() {
+  localStorage.setItem('words', JSON.stringify(words));
+  localStorage.setItem('wrongList', JSON.stringify(wrongList));
+}
+
+function showWord() {
+  if (!words || words.length === 0) {
+    document.getElementById('word').innerText = "単語がありません";
+    document.getElementById('meaning').innerText = "";
+    return;
+  }
+
+  // indexが範囲外ならリセット
+  if (index >= words.length) {
+    index = 0;
+  }
+
+  document.getElementById('word').innerText = words[index].word;
+  document.getElementById('meaning').innerText = "";
+}
+
+function showMeaning() {
+  if (!words[index]) return;
+  document.getElementById('meaning').innerText = words[index].meaning;
+}
+
+function markCorrect() {
+  nextWord();
+}
+
+function markWrong() {
+  if (words[index]) {
+    wrongList.push(words[index]);
+    save();
+  }
+  nextWord();
+}
+
+function nextWord() {
+  index++;
+
+  if (index >= words.length) {
+    if (wrongList.length > 0) {
+      alert("一周しました！復習モードに入ります");
+      words = [...wrongList];
+      wrongList = [];
+    } else {
+      alert("すべて正解！もう一度最初から");
+    }
+
+    index = 0;
+    save();
+  }
+
+  showWord();
+}
+
+function addWord() {
+  const w = document.getElementById('newWord').value.trim();
+  const m = document.getElementById('newMeaning').value.trim();
+
+  if (w && m) {
+    words.push({ word: w, meaning: m });
+    save();
+    alert("追加しました");
+
+    document.getElementById('newWord').value = "";
+    document.getElementById('newMeaning').value = "";
+  }
+}
+
+// ===== 簡易テスト（デバッグ用） =====
+function runTests() {
+  console.assert(Array.isArray(words), "wordsは配列であるべき");
+  console.assert(typeof index === 'number', "indexは数値であるべき");
+
+  if (words.length > 0) {
+    console.assert(words[0].word !== undefined, "wordプロパティが必要");
+    console.assert(words[0].meaning !== undefined, "meaningプロパティが必要");
+  }
+
+  console.log("テスト完了");
+}
+
+runTests();
+showWord();
+</script>
+
+</body>
+</html>
+
+
+/* =========================
+   Java（簡易サーバー例：Spring Boot）
+   ========================= */
+
+// build.gradle（依存関係）
+/*
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+}
+*/
+
+// MainApplication.java
+/*
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class MainApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(MainApplication.class, args);
+    }
+}
+*/
+
+// WordController.java
+/*
+import org.springframework.web.bind.annotation.*;
+import java.util.*;
+
+@RestController
+@RequestMapping("/api/words")
+public class WordController {
+
+    private List<Map<String, String>> words = new ArrayList<>();
+
+    @GetMapping
+    public List<Map<String, String>> getWords() {
+        return words;
+    }
+
+    @PostMapping
+    public void addWord(@RequestBody Map<String, String> word) {
+        words.add(word);
+    }
+}
+*/
