@@ -1,251 +1,144 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>マインスイーパー（巨大版）</title>
-  <style>
-    body { font-family: sans-serif; text-align: center; margin: 0; }
-    h1 { font-size: 18px; margin: 8px; }
-
-    button {
-      font-size: 16px;
-      padding: 8px 16px;
-      margin: 8px;
-    }
-
-    /* スクロール領域 */
-    #container {
-      width: 100vw;
-      height: 80vh;
-      overflow: auto;
-      border-top: 1px solid #ccc;
-    }
-
-    #board {
-      display: grid;
-      margin: 0 auto;
-    }
-
-    .cell {
-      width: 40px;
-      height: 40px;
-      border: 1px solid #999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #ccc;
-      font-weight: bold;
-      font-size: 16px;
-      user-select: none;
-    }
-
-    .revealed { background: #eee; }
-    .mine { background: red; }
-    .flag { background: yellow; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英単語帳</title>
+    <style>
+        /* CSSスタイル */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
+        #word-container {
+            text-align: center;
+        }
+        #word {
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+    </style>
 </head>
 <body>
-  <h1>巨大マインスイーパー</h1>
-  <button onclick="init()">リスタート</button>
+    <div id="word-container">
+        <div id="word">Loading...</div>
+        <button id="show-meaning-btn">意味を見る</button>
+        <p id="meaning" style="display: none;"></p>
+        <button id="correct-btn" style="display: none;">できた</button>
+        <button id="incorrect-btn" style="display: none;">できなかった</button>
+    </div>
 
-  <div id="container">
-    <div id="board"></div>
-  </div>
+    <script>
+        // JavaScriptコード
+        const initialWordList = [
+            { word: "apple", meaning: "りんご" },
+            { word: "banana", meaning: "バナナ" },
+            { word: "orange", meaning: "みかん" },
+            { word: "grape", meaning: "ぶどう" },
+            { word: "peach", meaning: "もも" }
+        ];
 
-  <script>
-    // 🔥 ここを好きなだけ大きくできる
-    const ROWS = 128;
-    const COLS = 128;
-    const MINES = 2000;
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let board = [];
-    let touchTimer = null;
+        const shuffledWordListKey = 'shuffledWordList';
+        const missedWordsKey = 'missedWords';
+        const resetKey = 'wordReset';
 
-    function init() {
-      const boardEl = document.getElementById('board');
-      boardEl.innerHTML = '';
-      boardEl.style.gridTemplateColumns = `repeat(${COLS}, 40px)`;
-
-      board = [];
-
-      for (let r = 0; r < ROWS; r++) {
-        board[r] = [];
-        for (let c = 0; c < COLS; c++) {
-          board[r][c] = {
-            mine: false,
-            revealed: false,
-            flag: false,
-            count: 0
-          };
-        }
-      }
-
-      let placed = 0;
-      while (placed < MINES) {
-        let r = Math.floor(Math.random() * ROWS);
-        let c = Math.floor(Math.random() * COLS);
-        if (!board[r][c].mine) {
-          board[r][c].mine = true;
-          placed++;
-        }
-      }
-
-      for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
-          if (board[r][c].mine) continue;
-          let count = 0;
-          for (let dr = -1; dr <= 1; dr++) {
-            for (let dc = -1; dc <= 1; dc++) {
-              let nr = r + dr;
-              let nc = c + dc;
-              if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) {
-                if (board[nr][nc].mine) count++;
-              }
+        // 配列シャッフル用関数
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
             }
-          }
-          board[r][c].count = count;
+            return array;
         }
-      }
 
-      for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
-          const cell = document.createElement('div');
-          cell.classList.add('cell');
-          cell.dataset.r = r;
-          cell.dataset.c = c;
-
-          cell.addEventListener('touchstart', onTouchStart);
-          cell.addEventListener('touchend', onTouchEnd);
-
-          cell.addEventListener('click', onClick);
-          cell.addEventListener('contextmenu', e => e.preventDefault());
-
-          boardEl.appendChild(cell);
+        // 単語リストをローカルストレージに初期化
+        if (!localStorage.getItem(resetKey) || localStorage.getItem(resetKey) !== JSON.stringify(initialWordList)) {
+            localStorage.setItem(resetKey, JSON.stringify(initialWordList));
+            localStorage.setItem(shuffledWordListKey, JSON.stringify(shuffleArray([...initialWordList])));
+            localStorage.setItem(missedWordsKey, JSON.stringify([]));
         }
-      }
-    }
 
-    function onTouchStart(e) {
-  touchStartX = touch.clientX;
-  touchStartY = touch.clientY;
+        const wordContainer = document.getElementById('word-container');
+        const wordElement = document.getElementById('word');
+        const showMeaningBtn = document.getElementById('show-meaning-btn');
+        const meaningElement = document.getElementById('meaning');
+        const correctBtn = document.getElementById('correct-btn');
+        const incorrectBtn = document.getElementById('incorrect-btn');
 
-  const target = e.target;
+        let shuffledWordList = JSON.parse(localStorage.getItem(shuffledWordListKey));
+        let missedWords = JSON.parse(localStorage.getItem(missedWordsKey));
 
-  touchTimer = setTimeout(() => {
-    const r = target.dataset.r;
-    const c = target.dataset.c;
-    toggleFlag(r, c);
-    touchTimer = null;
-  }, 400);
-}
+        function updateLocalStorage() {
+            localStorage.setItem(shuffledWordListKey, JSON.stringify(shuffledWordList));
+            localStorage.setItem(missedWordsKey, JSON.stringify(missedWords));
+        }
 
-    function onTouchEnd(e) {
-  const touch = e.changedTouches[0];
-
-  const dx = Math.abs(touch.clientX - touchStartX);
-  const dy = Math.abs(touch.clientY - touchStartY);
-
-  const moved = dx > 10 || dy > 10; // ←しきい値（重要）
-
-  if (touchTimer) {
-    clearTimeout(touchTimer);
-
-    if (!moved) {
-      const target = e.target;
-      const r = target.dataset.r;
-      const c = target.dataset.c;
-      reveal(r, c);
-    }
-  }
-}
-
-    function onClick(e) {
-      const r = e.target.dataset.r;
-      const c = e.target.dataset.c;
-      reveal(r, c);
-    }
-
-    function toggleFlag(r, c) {
-      r = Number(r);
-      c = Number(c);
-      const cell = board[r][c];
-      if (cell.revealed) return;
-      cell.flag = !cell.flag;
-      render();
-    }
-
-    function reveal(r, c) {
-      r = Number(r);
-      c = Number(c);
-
-      const cell = board[r][c];
-      if (cell.revealed || cell.flag) return;
-
-      cell.revealed = true;
-
-      if (cell.mine) {
-        alert('ゲームオーバー');
-        revealAll();
-        return;
-      }
-
-      if (cell.count === 0) {
-        for (let dr = -1; dr <= 1; dr++) {
-          for (let dc = -1; dc <= 1; dc++) {
-            let nr = r + dr;
-            let nc = c + dc;
-            if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) {
-              reveal(nr, nc);
+        function renderWord() {
+            if (shuffledWordList.length === 0 && missedWords.length > 0) {
+                shuffledWordList = [...missedWords];
+                missedWords = [];
+                updateLocalStorage();
             }
-          }
+
+            if (shuffledWordList.length === 0) {
+                wordElement.textContent = "全て完了しました！";
+                meaningElement.style.display = "none";
+                showMeaningBtn.style.display = "none";
+                correctBtn.style.display = "none";
+                incorrectBtn.style.display = "none";
+                return;
+            }
+
+            const currentWord = shuffledWordList[0];
+            wordElement.textContent = currentWord.word;
+            meaningElement.style.display = "none";
+            meaningElement.textContent = currentWord.meaning;
+            showMeaningBtn.style.display = "inline";
+            correctBtn.style.display = "none";
+            incorrectBtn.style.display = "none";
         }
-      }
 
-      render();
-    }
+        showMeaningBtn.addEventListener('click', () => {
+            meaningElement.style.display = "block";
+            showMeaningBtn.style.display = "none";
+            correctBtn.style.display = "inline";
+            incorrectBtn.style.display = "inline";
+        });
 
-    function revealAll() {
-      for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
-          board[r][c].revealed = true;
-        }
-      }
-      render();
-    }
+        correctBtn.addEventListener('click', () => {
+            if (missedWords.some(word => word.word === shuffledWordList[0].word)) {
+                missedWords = missedWords.filter(word => word.word !== shuffledWordList[0].word);
+            }
+            shuffledWordList.shift();
+            updateLocalStorage();
+            renderWord();
+        });
 
-    function render() {
-      const cells = document.querySelectorAll('.cell');
+        incorrectBtn.addEventListener('click', () => {
+            missedWords.push(shuffledWordList[0]);
+            shuffledWordList.shift();
+            updateLocalStorage();
+            renderWord();
+        });
 
-      cells.forEach(cellEl => {
-        const r = cellEl.dataset.r;
-        const c = cellEl.dataset.c;
-        const cell = board[r][c];
-
-        cellEl.className = 'cell';
-
-        if (cell.revealed) {
-          cellEl.classList.add('revealed');
-          if (cell.mine) {
-            cellEl.classList.add('mine');
-            cellEl.textContent = '💣';
-          } else if (cell.count > 0) {
-            cellEl.textContent = cell.count;
-          } else {
-            cellEl.textContent = '';
-          }
-        } else if (cell.flag) {
-          cellEl.classList.add('flag');
-          cellEl.textContent = '🚩';
-        } else {
-          cellEl.textContent = '';
-        }
-      });
-    }
-
-    init();
-  </script>
+        renderWord();
+    </script>
 </body>
 </html>
-
