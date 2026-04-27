@@ -3,67 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>English Vocabulary Quiz</title>
+    <title>Vocabulary Quiz</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .quiz-container { max-width: 600px; margin: auto; }
-        .hidden { display: none; }
+        body { font-family: Arial, sans-serif; }
+        button { margin: 5px; }
     </style>
 </head>
 <body>
-    <div class="quiz-container">
-        <h1>Vocabulary Quiz</h1>
-        <div id="questions"></div>
-        <button id="submit" class="hidden">Submit</button>
-        <button id="reset">Reset Progress</button>
-    </div>
+    <h1>Vocabulary Quiz</h1>
+    <div id="quiz-container"></div>
+    <button id="reveal-meaning">Reveal Meaning</button>
+    <button id="correct">Correct</button>
+    <button id="incorrect">Incorrect</button>
+    <button id="reset">Reset Quiz</button>
+
     <script>
-        const questions = [
-            { question: "What is the synonym of 'happy'?", options: ['sad', 'joyful', 'angry'], answer: 1 },
-            { question: "What does 'ubiquitous' mean?", options: ['rare', 'everywhere', 'difficult'], answer: 1 },
-            { question: "What is the antonym of 'diligent'?", options: ['lazy', 'hardworking', 'smart'], answer: 0 }
+        const words = [
+            { word: "rare", meaning: "珍しい" },
+            { word: "simple", meaning: "シンプルな" },
+            { word: "peaceful", meaning: "平和な" },
+            { word: "curious", meaning: "好奇心の強い" },
+            { word: "beautiful", meaning: "美しい" },
+            { word: "brave", meaning: "勇敢な" },
+            { word: "joyful", meaning: "喜ばしい" },
+            { word: "delicious", meaning: "美味しい" },
+            { word: "mysterious", meaning: "神秘的な" },
+            { word: "healthful", meaning: "健康に良い" },
+            { word: "generous", meaning: "気前の良い" },
+            { word: "wonderful", meaning: "素晴らしい" }
         ];
-        let currentQuestionIndex = 0;
-        let score = 0;
 
-        function loadQuestion() {
-            const questionElement = document.getElementById('questions');
-            questionElement.innerHTML = '';
-            const currentQuestion = questions[currentQuestionIndex];
-            const questionText = `<h2>${currentQuestion.question}</h2>`;
-            questionElement.insertAdjacentHTML('beforeend', questionText);
-            currentQuestion.options.forEach((option, index) => {
-                questionElement.insertAdjacentHTML('beforeend', `<button onclick="checkAnswer(${index})">${option}</button>`);
-            });
+        let currentWordIndex = 0;
+        let mistakes = JSON.parse(localStorage.getItem('mistakes')) || [];
+
+        function displayWord() {
+            const quizContainer = document.getElementById('quiz-container');
+            quizContainer.innerHTML = `<h2>${words[currentWordIndex].word}</h2>`;
         }
 
-        function checkAnswer(selectedIndex) {
-            if (selectedIndex === questions[currentQuestionIndex].answer) {
-                score++;
-            }
-            currentQuestionIndex++;
-            if (currentQuestionIndex < questions.length) {
-                loadQuestion();
-            } else {
-                showResult();
-            }
-        }
-
-        function showResult() {
-            const questionElement = document.getElementById('questions');
-            questionElement.innerHTML = `You scored ${score} out of ${questions.length}`;
-            localStorage.setItem('quizScore', score);
-            document.getElementById('submit').classList.remove('hidden');
-        }
-
-        document.getElementById('reset').addEventListener('click', () => {
-            localStorage.removeItem('quizScore');
-            score = 0;
-            currentQuestionIndex = 0;
-            loadQuestion();
+        document.getElementById('reveal-meaning').addEventListener('click', function() {
+            alert(`Meaning: ${words[currentWordIndex].meaning}`);
         });
 
-        loadQuestion();
+        document.getElementById('correct').addEventListener('click', function() {
+            currentWordIndex++;
+            if (currentWordIndex >= words.length) {
+                alert('Quiz Completed!');
+                currentWordIndex = 0;
+            }
+            displayWord();
+        });
+
+        document.getElementById('incorrect').addEventListener('click', function() {
+            mistakes.push(words[currentWordIndex]);
+            localStorage.setItem('mistakes', JSON.stringify(mistakes));
+            currentWordIndex++;
+            if (currentWordIndex >= words.length) {
+                alert('Quiz Completed!');
+                currentWordIndex = 0;
+            }
+            displayWord();
+        });
+
+        document.getElementById('reset').addEventListener('click', function() {
+            currentWordIndex = 0;
+            mistakes = [];
+            localStorage.removeItem('mistakes');
+            displayWord();
+        });
+
+        // Display the first word
+        displayWord();
     </script>
 </body>
 </html>
