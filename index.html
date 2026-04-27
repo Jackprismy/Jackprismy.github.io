@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>英単語帳</title>
+    <title>単語帳アプリ</title>
     <style>
-        /* CSSスタイル */
+        /* 全体のスタイル */
         body {
             font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
-            background-color: #f4f4f4;
+            background-color: #f0f8ff;
         }
         #word-container {
             text-align: center;
@@ -32,7 +32,12 @@
             cursor: pointer;
         }
         button:hover {
-            opacity: 0.9;
+            opacity: 0.8;
+        }
+        #progress {
+            margin-top: 20px;
+            font-size: 1em;
+            color: #555;
         }
     </style>
 </head>
@@ -43,10 +48,11 @@
         <p id="meaning" style="display: none;"></p>
         <button id="correct-btn" style="display: none;">できた</button>
         <button id="incorrect-btn" style="display: none;">できなかった</button>
+        <button id="restart-btn" style="display: none;">最初に戻す</button>
+        <p id="progress"></p>
     </div>
 
     <script>
-        // JavaScriptコード
         const initialWordList = [
             { word: "apple", meaning: "りんご" },
             { word: "banana", meaning: "バナナ" },
@@ -81,20 +87,29 @@
         const meaningElement = document.getElementById('meaning');
         const correctBtn = document.getElementById('correct-btn');
         const incorrectBtn = document.getElementById('incorrect-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const progressElement = document.getElementById('progress');
 
         let shuffledWordList = JSON.parse(localStorage.getItem(shuffledWordListKey));
         let missedWords = JSON.parse(localStorage.getItem(missedWordsKey));
+        let roundCount = 0;
 
         function updateLocalStorage() {
             localStorage.setItem(shuffledWordListKey, JSON.stringify(shuffledWordList));
             localStorage.setItem(missedWordsKey, JSON.stringify(missedWords));
         }
 
+        function renderProgress() {
+            progressElement.textContent = `${roundCount + 1}ラウンド目: 残り単語数: ${shuffledWordList.length}`;
+        }
+
         function renderWord() {
             if (shuffledWordList.length === 0 && missedWords.length > 0) {
                 shuffledWordList = [...missedWords];
                 missedWords = [];
+                roundCount += 1;
                 updateLocalStorage();
+                renderProgress();
             }
 
             if (shuffledWordList.length === 0) {
@@ -103,6 +118,8 @@
                 showMeaningBtn.style.display = "none";
                 correctBtn.style.display = "none";
                 incorrectBtn.style.display = "none";
+                restartBtn.style.display = "inline";
+                progressElement.textContent = "";
                 return;
             }
 
@@ -123,9 +140,6 @@
         });
 
         correctBtn.addEventListener('click', () => {
-            if (missedWords.some(word => word.word === shuffledWordList[0].word)) {
-                missedWords = missedWords.filter(word => word.word !== shuffledWordList[0].word);
-            }
             shuffledWordList.shift();
             updateLocalStorage();
             renderWord();
@@ -133,12 +147,23 @@
 
         incorrectBtn.addEventListener('click', () => {
             missedWords.push(shuffledWordList[0]);
-            shuffledWordList.shift();
+            // 3〜5問後に出題されるように間に質問を追加
+            const interval = Math.floor(Math.random() * 3) + 3;
+            const missedWord = shuffledWordList.shift();
+            shuffledWordList.splice(interval, 0, missedWord);
             updateLocalStorage();
             renderWord();
         });
 
+        restartBtn.addEventListener('click', () => {
+            localStorage.removeItem(resetKey);
+            localStorage.removeItem(shuffledWordListKey);
+            localStorage.removeItem(missedWordsKey);
+            location.reload();
+        });
+
         renderWord();
+        renderProgress();
     </script>
 </body>
 </html>
