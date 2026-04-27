@@ -2,205 +2,239 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>単語帳</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>単語帳 SRS 完全版</title>
+
   <style>
-    body { font-family: sans-serif; text-align: center; padding: 40px; }
-    #word { font-size: 40px; margin: 20px; }
-    #meaning { font-size: 24px; margin: 20px; color: #333; }
-    button { font-size: 18px; margin: 10px; padding: 10px 20px; }
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f5f5f5;
+      text-align: center;
+    }
+
+    .wrap {
+      max-width: 600px;
+      margin: auto;
+      padding: 30px 15px;
+    }
+
+    #word {
+      font-size: 44px;
+      margin: 40px 0 10px;
+      word-break: break-word;
+    }
+
+    #meaning {
+      font-size: 22px;
+      color: #333;
+      min-height: 30px;
+      margin-bottom: 30px;
+    }
+
+    button {
+      font-size: 18px;
+      padding: 14px 18px;
+      margin: 8px;
+      border: none;
+      border-radius: 10px;
+      background: #222;
+      color: white;
+      width: 80%;
+      max-width: 300px;
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    #answerBtns {
+      display: none;
+    }
   </style>
 </head>
+
 <body>
+<div class="wrap">
 
   <div id="word"></div>
   <div id="meaning"></div>
 
   <button id="showBtn">意味を見る</button>
 
-  <div id="resultBtns" style="display:none;">
+  <div id="answerBtns">
     <button onclick="answer(true)">できた</button>
     <button onclick="answer(false)">できなかった</button>
   </div>
 
-  <script>
-    // =========================
-    // 単語リスト（ここに直接追加）
-    // =========================
-    const words = [
-  { word: "be bound to V", meaning: "Vすることになっている" },
-  { word: "bet", meaning: "お金などをかける" },
-  { word: "demand", meaning: "を要求する" },
-  { word: "desire", meaning: "願望" },
-  { word: "praise", meaning: "を褒める" },
-  { word: "honor", meaning: "名誉" },
-  { word: "chat", meaning: "おしゃべりする" },
-  { word: "refer to", meaning: "について言及する（参照例として）" },
-  { word: "mention", meaning: "について言う" },
-  { word: "convey", meaning: "を運ぶ（言葉や感情も含む）" },
-  { word: "demonstrate", meaning: "を実演して示す" },
-  { word: "emphasize", meaning: "を強調する" },
-  { word: "exaggerate", meaning: "のことを大げさに言う" },
-  { word: "reply", meaning: "返事をする" },
-  { word: "respond", meaning: "返答する" },
-  { word: "whisper", meaning: "ささやく" },
-  { word: "remark", meaning: "発言する" },
-  { word: "observe", meaning: "を観察する" },
-  { word: "theory", meaning: "理論" },
-  { word: "analysis", meaning: "分析" },
-  { word: "phenomenon", meaning: "現象" },
-  { word: "device", meaning: "装置" },
-  { word: "experiment", meaning: "実験" },
-  { word: "chemical", meaning: "化学物質" },
-  { word: "fuel", meaning: "燃料" },
-  { word: "nuclear", meaning: "原子力の" },
-  { word: "statistics", meaning: "統計" },
-  { word: "pursue", meaning: "を追求する" },
-  { word: "accomplish", meaning: "をやり遂げる" },
-  { word: "overcome", meaning: "を克服する" },
-  { word: "fulfill", meaning: "を果たす" },
-  { word: "devote A to B", meaning: "AをBにささげる" },
-  { word: "strive", meaning: "努力する（困難を伴いながら）" },
-  { word: "aim", meaning: "狙う" },
-  { word: "challenge", meaning: "難問" },
-  { word: "trial", meaning: "試み" },
-  { word: "dizzy", meaning: "めまいがする" }
-      
-    ];
+</div>
 
-    // =========================
-    // 状態
-    // =========================
-    let queue = [];
-    let wrongList = [];
-    let recentWrong = [];
-    let current = null;
-    const retryGap = 4;
+<script>
+/* =========================
+   単語リスト（固定）
+========================= */
+const words = [
+  { word: "apple", meaning: "りんご" },
+  { word: "run", meaning: "走る" },
+  { word: "study", meaning: "勉強する" },
+  { word: "bear", meaning: "耐える" },
+  { word: "prevent", meaning: "防ぐ" },
+];
 
-    // =========================
-    // localStorageキー
-    // =========================
-    const LS_KEY = "wordAppState_v1";
+/* =========================
+   状態（index管理）
+========================= */
+let queue = [];
+let wrong = [];
+let recent = [];
+let current = null;
 
-    // =========================
-    // 初期化
-    // =========================
-    function init() {
-      const saved = loadState();
+const LS_KEY = "word_srs_final_v1";
 
-      if (saved) {
-        queue = saved.queue;
-        wrongList = saved.wrongList;
-        recentWrong = saved.recentWrong;
-        current = saved.current;
-      } else {
-        resetAll();
-      }
+/* =========================
+   初期化
+========================= */
+function init() {
+  const saved = load();
 
-      if (!current) next(false);
-      render();
+  if (saved) {
+    queue = saved.queue;
+    wrong = saved.wrong;
+    recent = saved.recent;
+    current = saved.current;
+  } else {
+    reset();
+  }
+
+  if (current === null || current === undefined) {
+    current = queue.shift();
+  }
+
+  save();
+  render();
+}
+
+/* =========================
+   次へ
+========================= */
+function next() {
+
+  // 2〜4問後に復習
+  if (recent.length >= 3) {
+    queue.splice(randomPos(), 0, recent.shift());
+  }
+
+  // 通常終了 → 間違いリストへ
+  if (queue.length === 0) {
+    if (wrong.length > 0) {
+      queue = shuffle([...wrong]);
+      wrong = [];
+    } else {
+      reset();
     }
+  }
 
-    // =========================
-    // 次へ
-    // =========================
-    function next(save = true) {
+  current = queue.shift();
 
-      if (recentWrong.length >= retryGap) {
-        queue.unshift(recentWrong.shift());
-      }
+  save();
+  render();
+}
 
-      if (queue.length === 0) {
-        if (wrongList.length > 0) {
-          queue = shuffle([...wrongList]);
-          wrongList = [];
-        } else {
-          resetAll();
-          return;
-        }
-      }
+/* =========================
+   回答
+========================= */
+function answer(correct) {
 
-      current = queue.shift();
+  if (!correct) {
+    wrong.push(current);
+    recent.push(current);
+  } else {
+    wrong = wrong.filter(i => i !== current);
+  }
 
-      if (save) saveState();
-      render();
-    }
+  next();
+}
 
-    // =========================
-    // 回答
-    // =========================
-    function answer(correct) {
-      if (!correct) {
-        wrongList.push(current);
-        recentWrong.push(current);
-      } else {
-        wrongList = wrongList.filter(w => w.word !== current.word);
-      }
+/* =========================
+   表示
+========================= */
+function render() {
+  if (current === null || current === undefined) return;
 
-      saveState();
-      next();
-    }
+  const w = words[current];
 
-    // =========================
-    // 表示
-    // =========================
-    function render() {
-      if (!current) return;
+  document.getElementById("word").innerText = w.word;
+  document.getElementById("meaning").innerText = "";
 
-      document.getElementById("word").innerText = current.word;
-      document.getElementById("meaning").innerText = "";
-      document.getElementById("showBtn").style.display = "inline-block";
-      document.getElementById("resultBtns").style.display = "none";
-    }
+  document.getElementById("showBtn").style.display = "block";
+  document.getElementById("answerBtns").style.display = "none";
+}
 
-    // =========================
-    // 意味表示
-    // =========================
-    document.getElementById("showBtn").onclick = () => {
-      document.getElementById("meaning").innerText = current.meaning;
-      document.getElementById("showBtn").style.display = "none";
-      document.getElementById("resultBtns").style.display = "block";
-    };
+/* =========================
+   意味表示
+========================= */
+document.getElementById("showBtn").onclick = () => {
+  const w = words[current];
 
-    // =========================
-    // リセット
-    // =========================
-    function resetAll() {
-      queue = shuffle([...words]);
-      wrongList = [];
-      recentWrong = [];
-      current = null;
-      saveState();
-    }
+  document.getElementById("meaning").innerText = w.meaning;
+  document.getElementById("showBtn").style.display = "none";
+  document.getElementById("answerBtns").style.display = "block";
+};
 
-    // =========================
-    // シャッフル
-    // =========================
-    function shuffle(arr) {
-      return arr.sort(() => Math.random() - 0.5);
-    }
+/* =========================
+   リセット
+========================= */
+function reset() {
+  queue = shuffle([...Array(words.length).keys()]);
+  wrong = [];
+  recent = [];
+  current = null;
+}
 
-    // =========================
-    // 保存
-    // =========================
-    function saveState() {
-      localStorage.setItem(LS_KEY, JSON.stringify({
-        queue,
-        wrongList,
-        recentWrong,
-        current
-      }));
-    }
+/* =========================
+   ランダム挿入位置（2〜4問後）
+========================= */
+function randomPos() {
+  return Math.min(
+    queue.length,
+    Math.floor(Math.random() * 3) + 2
+  );
+}
 
-    // =========================
-    // 読み込み
-    // =========================
-    function loadState() {
-      const data = localStorage.getItem(LS_KEY);
-      return data ? JSON.parse(data) : null;
-    }
+/* =========================
+   シャッフル
+========================= */
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
 
-    init();
-  </script>
+/* =========================
+   保存
+========================= */
+function save() {
+  localStorage.setItem(LS_KEY, JSON.stringify({
+    queue,
+    wrong,
+    recent,
+    current
+  }));
+}
+
+/* =========================
+   読み込み
+========================= */
+function load() {
+  const data = localStorage.getItem(LS_KEY);
+  return data ? JSON.parse(data) : null;
+}
+
+init();
+</script>
 
 </body>
 </html>
