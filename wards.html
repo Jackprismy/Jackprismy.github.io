@@ -52,6 +52,12 @@
     #answerBtns {
       display: none;
     }
+    
+    #resetDataBtn {
+  margin-top: 30px;
+  background: #b00020;
+    }
+
   </style>
 </head>
 
@@ -68,6 +74,7 @@
     <button onclick="answer(false)">できなかった</button>
   </div>
 
+<button id="resetDataBtn">学習データをリセット</button>
 </div>
 
 <script>
@@ -331,6 +338,14 @@ function load() {
   const data = localStorage.getItem(LS_KEY);
   return data ? JSON.parse(data) : null;
 }
+
+document.getElementById("resetDataBtn").onclick = () => {
+  localStorage.removeItem(LS_KEY);
+
+  alert("学習データをリセットしました");
+
+  location.reload();
+};
 
 init();
 </script>
