@@ -1,24 +1,285 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vocabulary Quiz</title>
+    <title>英単語帳</title>
     <style>
-        body { font-family: Arial, sans-serif; }
-        button { margin: 5px; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            padding: 40px 30px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .header {
+            margin-bottom: 40px;
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .progress {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+
+        .word-display {
+            margin: 40px 0;
+        }
+
+        .word {
+            font-size: 48px;
+            font-weight: bold;
+            color: #333;
+            word-break: break-word;
+            margin-bottom: 20px;
+            min-height: 60px;
+        }
+
+        .meaning {
+            font-size: 18px;
+            color: #555;
+            line-height: 1.6;
+            min-height: 60px;
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        .meaning.show {
+            display: block;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-success {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #da190b;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(244, 67, 54, 0.4);
+        }
+
+        .btn-secondary {
+            background: #9E9E9E;
+            color: white;
+            font-size: 12px;
+            padding: 8px 12px;
+            min-width: auto;
+        }
+
+        .btn-secondary:hover {
+            background: #757575;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .admin-panel {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .admin-title {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .completion-message {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4CAF50;
+            margin: 40px 0;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .mistake-list {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff3cd;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .mistake-list.show {
+            display: block;
+        }
+
+        .mistake-title {
+            font-weight: bold;
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .mistake-count {
+            font-size: 14px;
+            color: #856404;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            .word {
+                font-size: 36px;
+            }
+
+            button {
+                padding: 10px 18px;
+                font-size: 14px;
+                min-width: 100px;
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>Vocabulary Quiz</h1>
-    <div id="quiz-container"></div>
-    <button id="reveal-meaning">Reveal Meaning</button>
-    <button id="correct">Correct</button>
-    <button id="incorrect">Incorrect</button>
-    <button id="reset">Reset Quiz</button>
+    <div class="container">
+        <div class="header">
+            <div class="title">英単語帳</div>
+            <div class="progress">
+                <span id="progressText">0 / 0</span>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="mainContent">
+            <div class="word-display">
+                <div class="word" id="wordDisplay"></div>
+                <div class="meaning" id="meaningDisplay"></div>
+                <div class="mistake-list" id="mistakeListInfo">
+                    <div class="mistake-title">苦手な単語</div>
+                    <div class="mistake-count" id="mistakeCount"></div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button id="showMeaningBtn" class="btn-primary" onclick="showMeaning()">意味を見る</button>
+            </div>
+
+            <div class="button-group hidden" id="resultButtons">
+                <button id="correctBtn" class="btn-success" onclick="markCorrect()">できた</button>
+                <button id="incorrectBtn" class="btn-danger" onclick="markIncorrect()">できなかった</button>
+            </div>
+        </div>
+
+        <div id="completionContent" class="hidden">
+            <div class="completion-message">🎉 すべての問題を完了しました！</div>
+            <button id="restartBtn" class="btn-primary" onclick="restart()">もう一度</button>
+        </div>
+
+        <div class="admin-panel">
+            <div class="admin-title">管理</div>
+            <div class="button-group">
+                <button class="btn-secondary" onclick="clearLocalStorage()">ストレージをリセット</button>
+            </div>
+        </div>
+    </div>
 
     <script>
-        const words = [
+        // 単語データ
+        const vocabulary = [
   { word: "political", meaning: "政治的な" },
   { word: "certain", meaning: "確信している(Cとして使われると)" },
   { word: "prevent O from Ving", meaning: "OがVしないようにする" },
@@ -219,49 +480,240 @@
   { word: "volunteer", meaning: "ボランティア" },
   { word: "interact with O", meaning: "○と交流する" },
   { word: "contribute", meaning: "貢献する" },
+      
         ];
 
-        let currentWordIndex = 0;
-        let mistakes = JSON.parse(localStorage.getItem('mistakes')) || [];
+        let allWords = [];
+        let mistakeWords = [];
+        let currentIndex = 0;
+        let showingMistakes = false;
+        let previousWordCount = 0;
 
-        function displayWord() {
-            const quizContainer = document.getElementById('quiz-container');
-            quizContainer.innerHTML = `<h2>${words[currentWordIndex].word}</h2>`;
+        // ローカルストレージのキー
+        const STORAGE_KEYS = {
+            allWords: 'vocabAllWords',
+            mistakeWords: 'vocabMistakeWords',
+            currentIndex: 'vocabCurrentIndex',
+            showingMistakes: 'vocabShowingMistakes',
+            wordCount: 'vocabWordCount'
+        };
+
+        // 初期化
+        function init() {
+            loadFromStorage();
+            
+            // 単語数が増えた場合、ストレージをリセット
+            if (vocabulary.length > previousWordCount) {
+                clearLocalStorage();
+                previousWordCount = vocabulary.length;
+            }
+
+            if (allWords.length === 0) {
+                initializeWords();
+            }
+
+            displayWord();
         }
 
-        document.getElementById('reveal-meaning').addEventListener('click', function() {
-            alert(`Meaning: ${words[currentWordIndex].meaning}`);
-        });
+        // 単語データの初期化
+        function initializeWords() {
+            allWords = [...vocabulary];
+            mistakeWords = [];
+            currentIndex = 0;
+            showingMistakes = false;
+            previousWordCount = vocabulary.length;
+            shuffleArray(allWords);
+            saveToStorage();
+        }
 
-        document.getElementById('correct').addEventListener('click', function() {
-            currentWordIndex++;
-            if (currentWordIndex >= words.length) {
-                alert('Quiz Completed!');
-                currentWordIndex = 0;
+        // 配列をシャッフル
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
             }
-            displayWord();
-        });
+        }
 
-        document.getElementById('incorrect').addEventListener('click', function() {
-            mistakes.push(words[currentWordIndex]);
-            localStorage.setItem('mistakes', JSON.stringify(mistakes));
-            currentWordIndex++;
-            if (currentWordIndex >= words.length) {
-                alert('Quiz Completed!');
-                currentWordIndex = 0;
+        // 単語を表示
+        function displayWord() {
+            const mainContent = document.getElementById('mainContent');
+            const completionContent = document.getElementById('completionContent');
+
+            if (allWords.length === 0 && mistakeWords.length === 0) {
+                mainContent.classList.add('hidden');
+                completionContent.classList.remove('hidden');
+                return;
             }
-            displayWord();
-        });
 
-        document.getElementById('reset').addEventListener('click', function() {
-            currentWordIndex = 0;
-            mistakes = [];
-            localStorage.removeItem('mistakes');
-            displayWord();
-        });
+            mainContent.classList.remove('hidden');
+            completionContent.classList.add('hidden');
 
-        // Display the first word
-        displayWord();
+            const currentList = showingMistakes ? mistakeWords : allWords;
+            const current = currentList[currentIndex];
+
+            document.getElementById('wordDisplay').textContent = current.word;
+            document.getElementById('meaningDisplay').textContent = current.meaning;
+            document.getElementById('meaningDisplay').classList.remove('show');
+            document.getElementById('showMeaningBtn').classList.remove('hidden');
+            document.getElementById('resultButtons').classList.add('hidden');
+
+            updateProgress();
+            updateMistakeInfo();
+        }
+
+        // 意味を表示
+        function showMeaning() {
+            document.getElementById('meaningDisplay').classList.add('show');
+            document.getElementById('showMeaningBtn').classList.add('hidden');
+            document.getElementById('resultButtons').classList.remove('hidden');
+        }
+
+        // 正解をマーク
+        function markCorrect() {
+            if (showingMistakes) {
+                mistakeWords.splice(currentIndex, 1);
+                if (mistakeWords.length === 0) {
+                    allWords = [];
+                    showingMistakes = false;
+                    currentIndex = 0;
+                } else {
+                    if (currentIndex >= mistakeWords.length) {
+                        currentIndex = mistakeWords.length - 1;
+                    }
+                }
+            } else {
+                if (currentIndex < allWords.length - 1) {
+                    currentIndex++;
+                } else {
+                    // すべての単語が終了した場合
+                    if (mistakeWords.length > 0) {
+                        allWords = [];
+                        showingMistakes = true;
+                        currentIndex = 0;
+                    } else {
+                        allWords = [];
+                        saveToStorage();
+                        displayWord();
+                        return;
+                    }
+                }
+            }
+            saveToStorage();
+            displayWord();
+        }
+
+        // 不正解をマーク
+        function markIncorrect() {
+            const currentList = showingMistakes ? mistakeWords : allWords;
+            const current = currentList[currentIndex];
+
+            // すでにmistakeWordsにあるかチェック
+            const exists = mistakeWords.some(w => w.word === current.word && w.meaning === current.meaning);
+            if (!exists) {
+                mistakeWords.push(current);
+            }
+
+            if (showingMistakes) {
+                if (currentIndex < mistakeWords.length - 1) {
+                    currentIndex++;
+                } else {
+                    if (mistakeWords.length > 0) {
+                        allWords = [];
+                        showingMistakes = true;
+                        currentIndex = 0;
+                    } else {
+                        allWords = [];
+                        saveToStorage();
+                        displayWord();
+                        return;
+                    }
+                }
+            } else {
+                // 3～5問後に再出題するため、次の問題を進める
+                const currentList = showingMistakes ? mistakeWords : allWords;
+                if (currentIndex < currentList.length - 1) {
+                    currentIndex++;
+                } else {
+                    // すべての単語が終了した場合
+                    if (mistakeWords.length > 0) {
+                        allWords = [];
+                        showingMistakes = true;
+                        currentIndex = 0;
+                    } else {
+                        allWords = [];
+                        saveToStorage();
+                        displayWord();
+                        return;
+                    }
+                }
+            }
+            saveToStorage();
+            displayWord();
+        }
+
+        // 進捗を更新
+        function updateProgress() {
+            const currentList = showingMistakes ? mistakeWords : allWords;
+            const total = showingMistakes ? mistakeWords.length : vocabulary.length;
+            const current = currentIndex + 1;
+
+            document.getElementById('progressText').textContent = `${current} / ${total}`;
+
+            const percentage = (current / total) * 100;
+            document.getElementById('progressFill').style.width = percentage + '%';
+        }
+
+        // 苦手な単語情報を更新
+        function updateMistakeInfo() {
+            if (mistakeWords.length > 0) {
+                document.getElementById('mistakeListInfo').classList.add('show');
+                document.getElementById('mistakeCount').textContent = `苦手な単語: ${mistakeWords.length}個`;
+            } else {
+                document.getElementById('mistakeListInfo').classList.remove('show');
+            }
+        }
+
+        // ローカルストレージに保存
+        function saveToStorage() {
+            localStorage.setItem(STORAGE_KEYS.allWords, JSON.stringify(allWords));
+            localStorage.setItem(STORAGE_KEYS.mistakeWords, JSON.stringify(mistakeWords));
+            localStorage.setItem(STORAGE_KEYS.currentIndex, JSON.stringify(currentIndex));
+            localStorage.setItem(STORAGE_KEYS.showingMistakes, JSON.stringify(showingMistakes));
+            localStorage.setItem(STORAGE_KEYS.wordCount, JSON.stringify(vocabulary.length));
+        }
+
+        // ローカルストレージから読み込み
+        function loadFromStorage() {
+            const stored = localStorage.getItem(STORAGE_KEYS.allWords);
+            if (stored) {
+                allWords = JSON.parse(stored);
+                mistakeWords = JSON.parse(localStorage.getItem(STORAGE_KEYS.mistakeWords) || '[]');
+                currentIndex = JSON.parse(localStorage.getItem(STORAGE_KEYS.currentIndex) || '0');
+                showingMistakes = JSON.parse(localStorage.getItem(STORAGE_KEYS.showingMistakes) || 'false');
+                previousWordCount = JSON.parse(localStorage.getItem(STORAGE_KEYS.wordCount) || '0');
+            }
+        }
+
+        // ストレージをクリア
+        function clearLocalStorage() {
+            localStorage.removeItem(STORAGE_KEYS.allWords);
+            localStorage.removeItem(STORAGE_KEYS.mistakeWords);
+            localStorage.removeItem(STORAGE_KEYS.currentIndex);
+            localStorage.removeItem(STORAGE_KEYS.showingMistakes);
+            localStorage.removeItem(STORAGE_KEYS.wordCount);
+            initializeWords();
+            displayWord();
+            alert('ストレージをリセットしました');
+        }
+
+        // リスタート
+        function restart() {
+            initializeWords();
+            displayWord();
+        }
+
+        // ページロード時に初期化
+        window.addEventListener('load', init);
     </script>
 </body>
 </html>
