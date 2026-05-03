@@ -256,6 +256,7 @@
 
             <div class="button-group">
                 <button id="showMeaningBtn" class="btn-primary" onclick="showMeaning()">意味を見る</button>
+                <button class="btn-secondary" onclick="speakWord()">▶ 再生</button>
             </div>
 
             <div class="button-group hidden" id="resultButtons">
@@ -473,6 +474,21 @@
             document.getElementById('showMeaningBtn').classList.add('hidden');
             document.getElementById('resultButtons').classList.remove('hidden');
         }
+        
+        // 英単語を読み上げる
+        function speakWord() {
+             const currentList = showingMistakes ? mistakeWords : allWords;
+             const current = currentList[currentIndex];
+
+            const utterance = new SpeechSynthesisUtterance(current.word);
+            utterance.lang = 'en-US';   // 英語
+            utterance.rate = 0.9;       // 少しゆっくり
+            utterance.pitch = 1.0;      // 声の高さ
+            utterance.volume = 1.0;     // 音量
+        
+            speechSynthesis.cancel();   // 前の読み上げ停止
+            speechSynthesis.speak(utterance);
+         }
 
         // 正解をマーク
         function markCorrect() {
