@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>単語帳</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div id="start-screen">
+  <h1>単語帳</h1>
+
+  <input id="rangeInput" placeholder="例: 1-20,50-100" />
+
+  <button id="startBtn">開始</button>
+</div>
+
+<div id="app" class="hidden">
+
+  <div id="failed-list"></div>
+
+  <div id="card">
+
+    <div id="number"></div>
+
+    <div id="word"></div>
+
+    <div id="meaning"></div>
+
+    <div id="guide">
+      ↑ できた<br>
+      ↓ できなかった
+    </div>
+
+  </div>
+
+  <div id="buttons">
+    <button id="pauseBtn">一時停止</button>
+    <button id="resetBtn">リセット</button>
+  </div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
