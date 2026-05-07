@@ -1,0 +1,64 @@
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background: #111;
+  color: white;
+  overflow: hidden;
+}
+
+.hidden {
+  display: none;
+}
+
+#start-screen {
+  padding: 30px;
+}
+
+input {
+  width: 100%;
+  font-size: 20px;
+  padding: 10px;
+}
+
+button {
+  padding: 12px 20px;
+  font-size: 18px;
+  margin-top: 10px;
+}
+
+#card {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+}
+
+#number {
+  font-size: 24px;
+  color: #aaa;
+}
+
+#word {
+  font-size: 42px;
+  margin: 20px 0;
+}
+
+#meaning {
+  font-size: 28px;
+  color: #66ffcc;
+}
+
+#guide {
+  margin-top: 30px;
+  color: #aaa;
+}
+
+#failed-list {
+  position: fixed;
+  left: 10px;
+  top: 10px;
+  color: #ff6666;
+  font-size: 18px;
+}
