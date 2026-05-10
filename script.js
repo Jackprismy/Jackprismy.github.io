@@ -21,10 +21,18 @@ const wrongList = document.getElementById("wrongList");
 fetch("word1.json")
   .then(response => response.json())
   .then(data => {
+
     allWords = data.map((item, index) => ({
       ...item,
       originalIndex: index
     }));
+
+    document.getElementById("startBtn").disabled = false;
+    document.getElementById("allBtn").disabled = false;
+  })
+  .catch(error => {
+    alert("word1.json の読み込みに失敗しました");
+    console.error(error);
   });
 
 function startQuiz(start, end) {
