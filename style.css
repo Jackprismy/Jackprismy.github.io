@@ -1,64 +1,131 @@
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
+  padding: 0;
   font-family: sans-serif;
-  background: #111;
+  background: #f2f4f8;
+  color: #222;
+}
+
+.container {
+  width: 100%;
+  max-width: 500px;
+  margin: auto;
+  padding: 16px;
+}
+
+h1 {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.card {
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  margin-top: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+input {
+  width: 100%;
+  padding: 14px;
+  margin-top: 8px;
+  margin-bottom: 16px;
+  font-size: 18px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+}
+
+button {
+  width: 100%;
+  padding: 16px;
+  margin-top: 12px;
+  border: none;
+  border-radius: 14px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+#startBtn,
+#showMeaningBtn,
+#retryBtn {
+  background: #3478f6;
   color: white;
-  overflow: hidden;
+}
+
+#allBtn {
+  background: #555;
+  color: white;
+}
+
+.good {
+  background: #1fb15f;
+  color: white;
+}
+
+.bad {
+  background: #e14c4c;
+  color: white;
+}
+
+.wordCard {
+  text-align: center;
+}
+
+#questionNumber {
+  font-size: 18px;
+  color: #666;
+  margin-bottom: 16px;
+}
+
+#word {
+  font-size: 42px;
+  font-weight: bold;
+  margin: 40px 0;
+  word-break: break-word;
+}
+
+#meaning {
+  font-size: 28px;
+  margin-top: 24px;
+}
+
+.buttonRow {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.buttonRow button {
+  flex: 1;
+}
+
+.progress {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 18px;
 }
 
 .hidden {
   display: none;
 }
 
-#start-screen {
-  padding: 30px;
-}
-
-input {
-  width: 100%;
-  font-size: 20px;
-  padding: 10px;
-}
-
-button {
-  padding: 12px 20px;
+#wrongList {
+  margin-top: 20px;
+  line-height: 1.8;
   font-size: 18px;
-  margin-top: 10px;
 }
 
-#card {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  text-align: center;
-  padding: 20px;
-}
+@media (max-width: 480px) {
+  #word {
+    font-size: 36px;
+  }
 
-#number {
-  font-size: 24px;
-  color: #aaa;
-}
-
-#word {
-  font-size: 42px;
-  margin: 20px 0;
-}
-
-#meaning {
-  font-size: 28px;
-  color: #66ffcc;
-}
-
-#guide {
-  margin-top: 30px;
-  color: #aaa;
-}
-
-#failed-list {
-  position: fixed;
-  left: 10px;
-  top: 10px;
-  color: #ff6666;
-  font-size: 18px;
+  #meaning {
+    font-size: 24px;
+  }
 }
