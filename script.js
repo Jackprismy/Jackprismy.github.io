@@ -27,8 +27,17 @@ fetch("word1.json")
       originalIndex: index
     }));
 
-    document.getElementById("startBtn").disabled = false;
-    document.getElementById("allBtn").disabled = false;
+    const startBtn =
+      document.getElementById("startBtn");
+
+    const allBtn =
+      document.getElementById("allBtn");
+
+    startBtn.disabled = false;
+    allBtn.disabled = false;
+
+    startBtn.textContent = "開始";
+    allBtn.textContent = "すべてやる";
   })
   .catch(error => {
     alert("word1.json の読み込みに失敗しました");
