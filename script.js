@@ -1,189 +1,186 @@
-let words = [];
+let allWords = [];
 
-let activeList = [];
-let failedList = [];
+let currentList = [];
+let currentIndex = 0;
 
-let currentSlot = 0;
-let currentIndex = null;
+let wrongAnswers = [];
 
-let showingMeaning = false;
-let paused = false;
-
-let timer;
+const startScreen = document.getElementById("startScreen");
+const quizScreen = document.getElementById("quizScreen");
+const resultScreen = document.getElementById("resultScreen");
 
 const wordEl = document.getElementById("word");
 const meaningEl = document.getElementById("meaning");
-const numberEl = document.getElementById("number");
-const failedEl = document.getElementById("failed-list");
+const meaningArea = document.getElementById("meaningArea");
+const progressEl = document.getElementById("progress");
+const questionNumberEl = document.getElementById("questionNumber");
 
-fetch("words.json")
-  .then(res => res.json())
+const resultText = document.getElementById("resultText");
+const wrongList = document.getElementById("wrongList");
+
+fetch("word1.json")
+  .then(response => response.json())
   .then(data => {
-    words = data;
+    allWords = data.map((item, index) => ({
+      ...item,
+      originalIndex: index
+    }));
   });
 
-document.getElementById("startBtn").onclick = start;
+function startQuiz(start, end) {
 
-function parseRange(str) {
-  let result = [];
+  wrongAnswers = [];
 
-  str.split(",").forEach(part => {
-    let [a, b] = part.split("-").map(Number);
+  currentList = allWords.slice(start - 1, end);
+  currentIndex = 0;
 
-    for (let i = a; i <= b; i++) {
-      result.push(i - 1);
-    }
-  });
+  startScreen.classList.add("hidden");
+  resultScreen.classList.add("hidden");
+  quizScreen.classList.remove("hidden");
 
-  return result;
+  showQuestion();
 }
 
-let rangeList = [];
-let nextPointer = 3;
+function showQuestion() {
 
-function start() {
+  meaningArea.classList.add("hidden");
 
-  const input = document.getElementById("rangeInput").value;
-
-  rangeList = parseRange(input);
-
-  activeList = [
-    rangeList[0],
-    rangeList[1],
-    rangeList[2]
-  ];
-
-  nextPointer = 3;
-
-  document.getElementById("start-screen").classList.add("hidden");
-  document.getElementById("app").classList.remove("hidden");
-
-  nextQuestion();
-}
-
-function nextQuestion() {
-
-  if (paused) return;
-
-  if (activeList.every(v => v === undefined)) {
-
-    if (failedList.length === 0) {
-      alert("終了！");
-      return;
-    }
-
-    rangeList = [...new Set(failedList)];
-    failedList = [];
-
-    activeList = [
-      rangeList[0],
-      rangeList[1],
-      rangeList[2]
-    ];
-
-    nextPointer = 3;
-  }
-
-  currentIndex = activeList[currentSlot];
-
-  if (currentIndex === undefined) {
-    currentSlot = (currentSlot + 1) % 3;
-    nextQuestion();
+  if (currentIndex >= currentList.length) {
+    showResult();
     return;
   }
 
-  const item = words[currentIndex];
+  const item = currentList[currentIndex];
 
-  numberEl.textContent = currentIndex + 1;
   wordEl.textContent = item.word;
+  meaningEl.textContent = item.meaning;
 
-  meaningEl.textContent = "";
-  showingMeaning = false;
+  progressEl.textContent =
+    `${currentIndex + 1} / ${currentList.length}`;
 
-  timer = setTimeout(() => {
-
-    meaningEl.textContent = item.meaning;
-    showingMeaning = true;
-
-    timer = setTimeout(() => {
-      fail();
-    }, 2000);
-
-  }, 2000);
+  questionNumberEl.textContent =
+    `問題番号: ${item.originalIndex + 1}`;
 }
 
-function success() {
+function nextQuestion(correct) {
 
-  replaceCurrent();
+  const item = currentList[currentIndex];
 
-  moveNext();
-}
-
-function fail() {
-
-  failedList.push(currentIndex + 1);
-
-  updateFailed();
-
-  moveNext();
-}
-
-function replaceCurrent() {
-
-  if (nextPointer < rangeList.length) {
-    activeList[currentSlot] = rangeList[nextPointer];
-    nextPointer++;
-  } else {
-    activeList[currentSlot] = undefined;
+  if (!correct) {
+    wrongAnswers.push(item);
   }
+
+  currentIndex++;
+
+  showQuestion();
 }
 
-function moveNext() {
+function showResult() {
 
-  clearTimeout(timer);
+  quizScreen.classList.add("hidden");
+  resultScreen.classList.remove("hidden");
 
-  currentSlot = (currentSlot + 1) % 3;
+  resultText.innerHTML =
+    `間違えた数: <b>${wrongAnswers.length}</b>`;
 
-  nextQuestion();
-}
+  if (wrongAnswers.length === 0) {
 
-function updateFailed() {
+    wrongList.innerHTML = "全問正解！";
 
-  failedEl.textContent =
-    "ミス:\n" + [...new Set(failedList)].join(", ");
-}
+    document.getElementById("retryBtn").style.display =
+      "none";
 
-let startY = 0;
-
-document.addEventListener("touchstart", e => {
-  startY = e.touches[0].clientY;
-});
-
-document.addEventListener("touchend", e => {
-
-  if (!showingMeaning) return;
-
-  const endY = e.changedTouches[0].clientY;
-
-  const diff = startY - endY;
-
-  if (diff > 50) {
-    success();
-  } else if (diff < -50) {
-    fail();
+    return;
   }
-});
 
-document.getElementById("pauseBtn").onclick = () => {
-  paused = !paused;
+  document.getElementById("retryBtn").style.display =
+    "block";
 
-  if (!paused) {
-    nextQuestion();
-  }
-};
+  let html = "<h3>間違えた問題</h3>";
 
-document.getElementById("resetBtn").onclick = () => {
+  wrongAnswers.forEach(item => {
 
-  failedList = [];
-  updateFailed();
-};
+    html += `
+      <div>
+        ${item.originalIndex + 1}. ${item.word}
+      </div>
+    `;
+  });
+
+  wrongList.innerHTML = html;
+}
+
+document
+  .getElementById("showMeaningBtn")
+  .addEventListener("click", () => {
+
+    meaningArea.classList.remove("hidden");
+  });
+
+document
+  .getElementById("correctBtn")
+  .addEventListener("click", () => {
+
+    nextQuestion(true);
+  });
+
+document
+  .getElementById("wrongBtn")
+  .addEventListener("click", () => {
+
+    nextQuestion(false);
+  });
+
+document
+  .getElementById("startBtn")
+  .addEventListener("click", () => {
+
+    const start =
+      parseInt(document.getElementById("startNum").value);
+
+    const end =
+      parseInt(document.getElementById("endNum").value);
+
+    if (!start || !end) {
+
+      alert("開始番号と終了番号を入力してください");
+
+      return;
+    }
+
+    if (
+      start < 1 ||
+      end > allWords.length ||
+      start > end
+    ) {
+
+      alert("範囲が不正です");
+
+      return;
+    }
+
+    startQuiz(start, end);
+  });
+
+document
+  .getElementById("allBtn")
+  .addEventListener("click", () => {
+
+    startQuiz(1, allWords.length);
+  });
+
+document
+  .getElementById("retryBtn")
+  .addEventListener("click", () => {
+
+    currentList = [...wrongAnswers];
+
+    wrongAnswers = [];
+
+    currentIndex = 0;
+
+    resultScreen.classList.add("hidden");
+    quizScreen.classList.remove("hidden");
+
+    showQuestion();
+  });
