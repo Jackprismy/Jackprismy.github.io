@@ -8,36 +8,62 @@
 </head>
 <body>
 
-<div id="start-screen">
-  <h1>単語帳</h1>
+<div class="container">
 
-  <input id="rangeInput" placeholder="例: 1-20,50-100" />
+  <h1>英単語帳</h1>
 
-  <button id="startBtn">開始</button>
-</div>
+  <div id="startScreen">
 
-<div id="app" class="hidden">
+    <div class="card">
+      <h2>範囲を選択</h2>
 
-  <div id="failed-list"></div>
+      <label>開始番号</label>
+      <input type="number" id="startNum" placeholder="1">
 
-  <div id="card">
+      <label>終了番号</label>
+      <input type="number" id="endNum" placeholder="100">
 
-    <div id="number"></div>
-
-    <div id="word"></div>
-
-    <div id="meaning"></div>
-
-    <div id="guide">
-      ↑ できた<br>
-      ↓ できなかった
+      <button id="startBtn">開始</button>
+      <button id="allBtn">すべてやる</button>
     </div>
 
   </div>
 
-  <div id="buttons">
-    <button id="pauseBtn">一時停止</button>
-    <button id="resetBtn">リセット</button>
+  <div id="quizScreen" class="hidden">
+
+    <div class="progress" id="progress"></div>
+
+    <div class="card wordCard">
+      <div id="questionNumber"></div>
+      <div id="word"></div>
+
+      <button id="showMeaningBtn">意味を見る</button>
+
+      <div id="meaningArea" class="hidden">
+        <div id="meaning"></div>
+
+        <div class="buttonRow">
+          <button id="correctBtn" class="good">できた</button>
+          <button id="wrongBtn" class="bad">できなかった</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="resultScreen" class="hidden">
+
+    <div class="card">
+      <h2>終了！</h2>
+
+      <div id="resultText"></div>
+
+      <div id="wrongList"></div>
+
+      <button id="retryBtn">間違えた問題をもう一度やる</button>
+      <button onclick="location.reload()">最初に戻る</button>
+    </div>
+
   </div>
 
 </div>
