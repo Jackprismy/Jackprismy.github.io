@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>英単語アプリ</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="container">
+
+    <!-- 最初の教材選択 -->
+    <div id="bookSelect">
+      <h1>教材を選択</h1>
+      <div id="bookButtons"></div>
+    </div>
+
+    <!-- 範囲選択 -->
+    <div id="rangeSelect" class="hidden">
+      <h1>範囲を選択</h1>
+      <div id="rangeButtons"></div>
+    </div>
+
+    <!-- 問題画面 -->
+    <div id="quizArea" class="hidden">
+
+      <div id="progress"></div>
+
+      <div id="word"></div>
+
+      <div id="meaning" class="hidden"></div>
+
+      <button id="showMeaningBtn">
+        意味を見る
+      </button>
+
+      <button id="speakBtn">
+        発音を確認
+      </button>
+
+      <div id="answerButtons" class="hidden">
+        <button id="correctBtn" class="good">
+          できた
+        </button>
+
+        <button id="wrongBtn" class="bad">
+          できなかった
+        </button>
+      </div>
+
+    </div>
+
+    <!-- 終了 -->
+    <div id="finishArea" class="hidden">
+      <h1>終了！</h1>
+      <p id="finishText"></p>
+
+      <button id="restartBtn">
+        最初に戻る
+      </button>
+    </div>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
