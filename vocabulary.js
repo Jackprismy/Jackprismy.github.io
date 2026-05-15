@@ -61,14 +61,45 @@ books.forEach(book => {
 
   btn.textContent = book.name;
 
-  btn.onclick = async () => {
+books.forEach(async (book) => {
+
+  const btn = document.createElement("button");
+
+  btn.textContent = book.name;
+
+  try {
 
     const response = await fetch(book.file);
 
-    words = await response.json();
+    if (!response.ok) {
+      throw new Error();
+    }
 
-    showRanges();
-  };
+    btn.onclick = async () => {
+
+      const dataResponse = await fetch(book.file);
+
+      words = await dataResponse.json();
+
+      showRanges();
+    };
+
+  } catch {
+
+    btn.textContent = `${book.name}（準備中）`;
+
+    btn.disabled = true;
+
+    btn.style.opacity = "0.5";
+    
+    btn.style.background = "#ccc";
+    
+    btn.style.color = "#666";
+    
+  }
+
+  bookButtons.appendChild(btn);
+});
 
   bookButtons.appendChild(btn);
 });
