@@ -1,0 +1,50 @@
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background: #f4f4f4;
+  text-align: center;
+}
+
+.container {
+  padding: 20px;
+}
+
+.hidden {
+  display: none;
+}
+
+button {
+  padding: 14px 20px;
+  margin: 10px;
+  font-size: 18px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+#word {
+  font-size: 34px;
+  margin-top: 40px;
+  font-weight: bold;
+}
+
+#meaning {
+  font-size: 26px;
+  margin-top: 30px;
+  color: #333;
+}
+
+.good {
+  background: #4caf50;
+  color: white;
+}
+
+.bad {
+  background: #f44336;
+  color: white;
+}
+
+#progress {
+  margin-top: 20px;
+  font-size: 18px;
+}
