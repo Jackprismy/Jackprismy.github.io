@@ -99,9 +99,6 @@ books.forEach(async (book) => {
   bookButtons.appendChild(btn);
 });
 
-  bookButtons.appendChild(btn);
-});
-
 // =====================
 // 範囲ボタン生成
 // =====================
