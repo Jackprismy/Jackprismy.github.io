@@ -5,12 +5,16 @@
 // ここを増やすだけで教材追加可能
 const books = [
   {
-    name: "1",
+    name: "1~800",
     file: "word1.json"
   },
   {
-    name: "2",
+    name: "801~1600",
     file: "word2.json"
+  },
+  {
+    name: "1601~2400",
+    file: "word3.json"
   }
 ];
 
@@ -54,12 +58,6 @@ let currentWord = null;
 // =====================
 // 教材選択ボタン生成
 // =====================
-
-books.forEach(book => {
-
-  const btn = document.createElement("button");
-
-  btn.textContent = book.name;
 
 books.forEach(async (book) => {
 
