@@ -59,44 +59,43 @@ let currentWord = null;
 // 教材選択ボタン生成
 // =====================
 
-books.forEach(async (book) => {
+books.forEach((book) => {
 
   const btn = document.createElement("button");
 
   btn.textContent = book.name;
 
-  try {
-
-    const response = await fetch(book.file);
-
-    if (!response.ok) {
-      throw new Error();
-    }
-
-    btn.onclick = async () => {
-
-      const dataResponse = await fetch(book.file);
-
-      words = await dataResponse.json();
-
-      showRanges();
-    };
-
-  } catch {
-
-    btn.textContent = `${book.name}（準備中）`;
-
-    btn.disabled = true;
-
-    btn.style.opacity = "0.5";
-    
-    btn.style.background = "#ccc";
-    
-    btn.style.color = "#666";
-    
-  }
-
   bookButtons.appendChild(btn);
+
+  fetch(book.file)
+    .then(response => {
+
+      if (!response.ok) {
+        throw new Error();
+      }
+
+      btn.onclick = async () => {
+
+        const dataResponse = await fetch(book.file);
+
+        words = await dataResponse.json();
+
+        showRanges();
+      };
+    })
+
+    .catch(() => {
+
+      btn.textContent = `${book.name}（準備中）`;
+
+      btn.disabled = true;
+
+      btn.style.opacity = "0.5";
+
+      btn.style.background = "#ccc";
+
+      btn.style.color = "#666";
+    });
 });
 
 // =====================
