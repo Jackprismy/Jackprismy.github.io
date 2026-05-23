@@ -41,6 +41,10 @@ const elements = {
   resultTitle: document.querySelector("#resultTitle"),
   resultScore: document.querySelector("#resultScore"),
   resultMistakeList: document.querySelector("#resultMistakeList"),
+  jsonExportBox: document.querySelector("#jsonExportBox"),
+  mistakeJsonText: document.querySelector("#mistakeJsonText"),
+  copyJsonButton: document.querySelector("#copyJsonButton"),
+  copyStatus: document.querySelector("#copyStatus"),
   resultActions: document.querySelector("#resultActions")
 };
 
@@ -68,6 +72,7 @@ elements.speakButton.addEventListener("click", () => {
   const current = state.quizWords[state.currentIndex];
   if (current) speak(current.word);
 });
+elements.copyJsonButton.addEventListener("click", copyMistakeJson);
 
 async function init() {
   prepareVoices();
@@ -345,6 +350,7 @@ function renderMistakeList(container, mistakes, emptyText) {
 function showResult() {
   resetFeedback();
   showScreen("result");
+  hideMistakeJson();
 
   const total = state.quizWords.length;
   const missed = state.mistakes.length;
@@ -366,9 +372,61 @@ function showResult() {
   elements.resultScore.textContent = `${total}問中 ${correct}問正解。間違えた ${missed}問をもう一度できます。`;
   elements.resultActions.append(
     makeButton("間違えた問題だけもう一度", "primary-button", retryMistakes),
+    makeButton("間違えた単語をJSONで表示", "secondary-button", showMistakeJson),
     makeButton("範囲選択に戻る", "secondary-button", showRangeScreen),
     makeButton("最初の画面へ", "secondary-button", showFileScreen)
   );
+}
+
+function showMistakeJson() {
+  const jsonText = formatMistakesAsJson(state.mistakes);
+  elements.mistakeJsonText.value = jsonText;
+  elements.copyStatus.textContent = "";
+  elements.jsonExportBox.hidden = false;
+  elements.jsonExportBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function hideMistakeJson() {
+  elements.jsonExportBox.hidden = true;
+  elements.mistakeJsonText.value = "";
+  elements.copyStatus.textContent = "";
+}
+
+function formatMistakesAsJson(mistakes) {
+  const rows = mistakes.map((item) => {
+    const word = JSON.stringify(item.word);
+    const meaning = JSON.stringify(item.meaning);
+    return `  { "word": ${word}, "meaning": ${meaning} }`;
+  });
+
+  return `[\n${rows.join(",\n")}\n]`;
+}
+
+async function copyMistakeJson() {
+  const text = elements.mistakeJsonText.value;
+  if (!text) return;
+
+  selectMistakeJsonText();
+
+  try {
+    if (!navigator.clipboard) throw new Error("Clipboard API is not available.");
+    await navigator.clipboard.writeText(text);
+    setCopyStatus("コピーしました。");
+  } catch (error) {
+    const copied = document.execCommand("copy");
+    setCopyStatus(copied ? "コピーしました。" : "テキストを選択しました。長押しでコピーできます。", !copied);
+  }
+}
+
+function selectMistakeJsonText() {
+  elements.mistakeJsonText.focus({ preventScroll: true });
+  elements.mistakeJsonText.select();
+  elements.mistakeJsonText.setSelectionRange(0, elements.mistakeJsonText.value.length);
+}
+
+function setCopyStatus(text, isError = false) {
+  elements.copyStatus.textContent = text;
+  elements.copyStatus.classList.toggle("is-error", isError);
 }
 
 function makeButton(label, className, onClick) {
@@ -382,6 +440,7 @@ function makeButton(label, className, onClick) {
 
 function showFileScreen() {
   clearResultTimer();
+  hideMistakeJson();
   stopSpeech();
   resetFeedback();
   showScreen("files");
@@ -389,6 +448,7 @@ function showFileScreen() {
 
 function showRangeScreen() {
   clearResultTimer();
+  hideMistakeJson();
   stopSpeech();
   resetFeedback();
   showScreen("ranges");
