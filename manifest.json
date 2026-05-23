@@ -6,5 +6,9 @@
   {
     "file": "word2.json",
     "label": "word2"
+  },
+  {
+    "file": "wordUneasy.json",
+    "label": "wordUneasy"
   }
 ]
