@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>単語ボード</title>
+    <link rel="stylesheet" href="board.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="screen" id="fileScreen" aria-labelledby="fileTitle">
+        <header class="screen-head">
+          <p class="eyebrow">Vocabulary</p>
+          <h1 id="fileTitle">ファイル</h1>
+        </header>
+        <div class="button-list" id="fileList"></div>
+        <p class="status-text" id="fileStatus" role="status"></p>
+      </section>
+
+      <section class="screen" id="rangeScreen" aria-labelledby="rangeTitle" hidden>
+        <header class="nav-head">
+          <button class="icon-button" type="button" id="backToFiles" aria-label="ファイル選択に戻る" title="戻る">←</button>
+          <div class="nav-title">
+            <p class="eyebrow" id="selectedFileLabel">File</p>
+            <h1 id="rangeTitle">範囲</h1>
+          </div>
+        </header>
+        <div class="button-list range-list" id="rangeList"></div>
+        <p class="status-text" id="rangeStatus" role="status"></p>
+      </section>
+
+      <section class="screen board-screen" id="boardScreen" aria-labelledby="boardTitle" hidden>
+        <header class="board-head">
+          <div class="board-top">
+            <button class="icon-button" type="button" id="backToRanges" aria-label="範囲選択に戻る" title="戻る">←</button>
+            <div class="nav-title">
+              <p class="eyebrow" id="boardSourceLabel">File</p>
+              <h1 id="boardTitle">1〜40</h1>
+            </div>
+            <button class="icon-button" type="button" id="reshuffleButton" aria-label="もう一度シャッフル" title="もう一度シャッフル">↻</button>
+          </div>
+
+          <div class="board-tools">
+            <span class="word-count" id="wordCount">0語</span>
+            <button class="tool-button" type="button" id="hideAllButton">すべて隠す</button>
+          </div>
+
+          <div class="column-head" aria-hidden="true">
+            <span>英単語</span>
+            <span>意味</span>
+          </div>
+        </header>
+
+        <div class="word-list" id="wordList"></div>
+      </section>
+    </main>
+
+    <script src="board.js" defer></script>
+  </body>
+</html>
