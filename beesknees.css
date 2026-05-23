@@ -364,6 +364,55 @@ h1 {
   margin-bottom: 18px;
 }
 
+.json-export {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 8px 22px rgba(29, 35, 41, 0.07);
+}
+
+.json-export[hidden] {
+  display: none;
+}
+
+.json-label {
+  color: var(--accent-strong);
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.json-output {
+  width: 100%;
+  min-height: 170px;
+  max-height: 42svh;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 16px;
+  line-height: 1.5;
+  overflow: auto;
+  resize: vertical;
+  -webkit-text-size-adjust: 100%;
+}
+
+.copy-status {
+  min-height: 1.4em;
+  margin: 0;
+  color: var(--accent-strong);
+  font-size: 0.92rem;
+}
+
+.copy-status.is-error {
+  color: var(--bad-line);
+}
+
 .result-actions {
   display: grid;
   gap: 10px;
