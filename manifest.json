@@ -1,5 +1,5 @@
 [
   { "file": "word1.json", "label": "word1" },
   { "file": "word2.json", "label": "word2" },
-  { "file": "wordUneasy2.json", "label": "wordUneasy2" }
+  { "file": "wordUneasy2.json", "label": "wordUneasy2", "startNumber": 1 }
 ]
