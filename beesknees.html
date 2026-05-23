@@ -68,6 +68,12 @@
           <h1 id="resultTitle">結果</h1>
           <p class="result-score" id="resultScore"></p>
           <div class="mistake-list result-list" id="resultMistakeList"></div>
+          <div class="json-export" id="jsonExportBox" hidden>
+            <label class="json-label" for="mistakeJsonText">間違えた単語JSON</label>
+            <textarea class="json-output" id="mistakeJsonText" readonly rows="8"></textarea>
+            <button class="secondary-button" type="button" id="copyJsonButton">コピー</button>
+            <p class="copy-status" id="copyStatus" role="status"></p>
+          </div>
           <div class="result-actions" id="resultActions"></div>
         </div>
       </section>
