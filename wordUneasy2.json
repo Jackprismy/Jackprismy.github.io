@@ -49,5 +49,12 @@
   { "word": "radiation", "meaning": "放射線" },
   { "word": "declare O", "meaning": "Oを宣言する" },
   { "word": "dedicate A to B", "meaning": "AをBにささげる" },
-  { "word": "dismiss O", "meaning": "Oを解散させる" }
+  { "word": "dismiss O", "meaning": "Oを解散させる" },
+  { "word": "lung", "meaning": "肺" },
+  { "word": "organ", "meaning": "臓器" },
+  { "word": "contract", "meaning": "契約" },
+  { "word": "negotiate", "meaning": "交渉する" },
+  { "word": "proof", "meaning": "証拠" },
+  { "word": "principle", "meaning": "原理" },
+  { "word": "poverty", "meaning": "貧困" }
 ]
