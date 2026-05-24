@@ -43,6 +43,7 @@ button {
 }
 
 .screen {
+  display: block;
   min-height: calc(100svh - 40px);
 }
 
@@ -122,6 +123,7 @@ h1 {
 .select-button,
 .icon-button,
 .tool-button,
+.speak-button,
 .meaning-button {
   border: 0;
   cursor: pointer;
@@ -295,6 +297,33 @@ h1 {
   border-color: #e0c996;
   background: #fff8e9;
   color: #72500f;
+}
+
+.word-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 3px;
+}
+
+.speak-button {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border: 1px solid #c9d7d2;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--accent-dark);
+  font-size: 0.8rem;
+  font-weight: 850;
+  line-height: 1;
+}
+
+.speak-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
 }
 
 .meaning-button {
