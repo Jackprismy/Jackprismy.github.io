@@ -153,6 +153,16 @@ const COMMON_VERBS = new Set([
   "substitute",
   "supply"
 ]);
+const VOICE_NAME_PRIORITY = [
+  "Google US English",
+  "Microsoft Aria",
+  "Microsoft Jenny",
+  "Microsoft Guy",
+  "Samantha",
+  "Alex",
+  "Daniel",
+  "Karen"
+];
 
 const screens = {
   files: document.querySelector("#fileScreen"),
@@ -183,6 +193,9 @@ const state = {
   currentRange: null,
   boardWords: []
 };
+const voiceState = {
+  englishVoice: null
+};
 
 document.addEventListener("DOMContentLoaded", init);
 elements.backToFiles.addEventListener("click", showFileScreen);
@@ -191,6 +204,7 @@ elements.reshuffleButton.addEventListener("click", reshuffleCurrentRange);
 elements.hideAllButton.addEventListener("click", hideAllMeanings);
 
 async function init() {
+  prepareVoices();
   showScreen("files");
   setStatus(elements.fileStatus, "読み込み中です。");
 
@@ -411,7 +425,11 @@ function createWordRow(item) {
   }
   item.partInfo.labels.forEach((label) => meta.append(createChip(label)));
 
-  wordCell.append(number, word, meta);
+  const actions = document.createElement("div");
+  actions.className = "word-actions";
+  actions.append(createSpeakButton(item.word));
+
+  wordCell.append(number, word, meta, actions);
 
   const meaningButton = document.createElement("button");
   meaningButton.className = "meaning-button is-hidden";
@@ -425,6 +443,72 @@ function createWordRow(item) {
 
   row.append(wordCell, meaningButton);
   return row;
+}
+
+function createSpeakButton(word) {
+  const button = document.createElement("button");
+  button.className = "speak-button";
+  button.type = "button";
+  button.textContent = "♪ 発音";
+  button.setAttribute("aria-label", `${word}の発音を聞く`);
+  button.title = "発音";
+
+  if (!("speechSynthesis" in window)) {
+    button.disabled = true;
+    button.textContent = "発音なし";
+  } else {
+    button.addEventListener("click", () => speak(word));
+  }
+
+  return button;
+}
+
+function prepareVoices() {
+  if (!("speechSynthesis" in window)) return;
+
+  const updateVoice = () => {
+    voiceState.englishVoice = chooseEnglishVoice(window.speechSynthesis.getVoices());
+  };
+
+  updateVoice();
+  window.speechSynthesis.addEventListener("voiceschanged", updateVoice);
+}
+
+function chooseEnglishVoice(voices) {
+  const englishVoices = voices.filter((voice) => /^en([-_]|$)/i.test(voice.lang));
+  if (englishVoices.length === 0) return null;
+
+  for (const name of VOICE_NAME_PRIORITY) {
+    const voice = englishVoices.find((candidate) => candidate.name.includes(name));
+    if (voice) return voice;
+  }
+
+  return englishVoices.find((voice) => /^en[-_]us/i.test(voice.lang)) || englishVoices[0];
+}
+
+function speak(word) {
+  if (!("speechSynthesis" in window)) return;
+
+  const utterance = new SpeechSynthesisUtterance(makePronunciationText(word));
+  utterance.lang = "en-US";
+  utterance.rate = 0.86;
+  utterance.pitch = 1;
+
+  if (voiceState.englishVoice) {
+    utterance.voice = voiceState.englishVoice;
+  }
+
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utterance);
+}
+
+function makePronunciationText(word) {
+  const text = String(word || "")
+    .replace(/\b[ABOXV]\b/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return text || String(word || "");
 }
 
 function createChip(text, extraClass = "") {
