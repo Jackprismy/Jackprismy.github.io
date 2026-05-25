@@ -71,5 +71,10 @@
   { "word": "combine A with B", "meaning": "AをBと結びつける" },
   { "word": "firm", "meaning": "会社" },
   { "word": "conservative", "meaning": "保守的な" },
-  { "word": "labor", "meaning": "労働" }
+  { "word": "labor", "meaning": "労働" },
+  { "word": "confirm O", "meaning": "Oを確認する（正しいかどうかを）" },
+  { "word": "conquer O", "meaning": "Oを征服する" },
+  { "word": "dominate O", "meaning": "Oを支配する" },
+  { "word": "deprive A of B", "meaning": "AからBをうばう" },
+  { "word": "revise O", "meaning": "Oを修正する" }
 ]
