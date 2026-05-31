@@ -234,17 +234,24 @@ h1 {
 }
 
 .word-side,
+.meaning-list,
 .meaning-button {
-  display: flex;
   min-width: 0;
-  align-items: center;
   border-radius: 7px;
 }
 
 .word-side {
+  display: flex;
+  align-items: center;
   flex-wrap: wrap;
   gap: 6px;
   padding: 4px 2px;
+}
+
+.meaning-list {
+  display: grid;
+  gap: 7px;
+  align-content: stretch;
 }
 
 .word {
@@ -269,7 +276,10 @@ h1 {
 }
 
 .meaning-button {
+  display: flex;
+  align-items: center;
   width: 100%;
+  min-height: 42px;
   justify-content: flex-start;
   padding: 10px;
   border: 1px solid transparent;
