@@ -1,7 +1,7 @@
 "use strict";
 
 const CHUNK_SIZE = 25;
-const DATA_FILES = ["kotan2.json", "kotan2 a.json"];
+const DATA_FILE = "kotan2.json";
 
 const elements = {
   rangeScreen: document.querySelector("#rangeScreen"),
@@ -41,34 +41,24 @@ async function init() {
     setStatus("");
   } catch (error) {
     console.error(error);
-    setStatus("単語データを読み込めませんでした。kotan2.json または kotan2 a.json を同じフォルダに置いてください。", true);
+    setStatus("単語データを読み込めませんでした。kotan2.json を同じフォルダに置いてください。", true);
   }
 }
 
 async function loadWords() {
-  const errors = [];
-
-  for (const file of DATA_FILES) {
-    try {
-      const response = await fetch(encodeURI(file), { cache: "no-store" });
-      if (!response.ok) {
-        throw new Error(`${file}: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const words = normalizeWords(data);
-
-      if (!words.length) {
-        throw new Error(`${file}: 単語がありません`);
-      }
-
-      return { words, file };
-    } catch (error) {
-      errors.push(error);
-    }
+  const response = await fetch(encodeURI(DATA_FILE), { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error(`${DATA_FILE}: ${response.status}`);
   }
 
-  throw new Error(errors.map((error) => error.message).join(" / "));
+  const data = await response.json();
+  const words = normalizeWords(data);
+
+  if (!words.length) {
+    throw new Error(`${DATA_FILE}: 単語がありません`);
+  }
+
+  return { words, file: DATA_FILE };
 }
 
 function normalizeWords(data) {
@@ -80,17 +70,17 @@ function normalizeWords(data) {
     .map((item, index) => {
       const word = readText(item.word ?? item.term ?? item.name);
       const type = readText(item.katuyou ?? item.type ?? item.part);
-      const meaning = readMeaning(item.mean ?? item.meaning ?? item.answer);
+      const meanings = readMeanings(item.mean ?? item.meaning ?? item.answer);
 
       return {
         id: `${index}-${word}`,
         number: index + 1,
         word,
         type,
-        meaning
+        meanings
       };
     })
-    .filter((item) => item.word && item.meaning);
+    .filter((item) => item.word && item.meanings.length);
 }
 
 function readText(value) {
@@ -101,12 +91,13 @@ function readText(value) {
   return String(value).trim();
 }
 
-function readMeaning(value) {
+function readMeanings(value) {
   if (Array.isArray(value)) {
-    return value.map(readText).filter(Boolean).join(" / ");
+    return value.map(readText).filter(Boolean);
   }
 
-  return readText(value);
+  const meaning = readText(value);
+  return meaning ? [meaning] : [];
 }
 
 function makeRanges(words) {
@@ -169,20 +160,30 @@ function renderWords() {
 
   state.currentRange.words.forEach((item) => {
     const row = document.createElement("article");
-    const isVisible = state.visibleIds.has(item.id);
+    const meaningButtons = item.meanings.map((meaning, meaningIndex) => {
+      const id = meaningId(item, meaningIndex);
+      const isVisible = state.visibleIds.has(id);
+
+      return `
+        <button class="meaning-button ${isVisible ? "" : "is-hidden"}" type="button" aria-expanded="${isVisible}">
+          <span class="meaning-text">${escapeHtml(meaning)}</span>
+          <span class="hidden-mark" aria-hidden="true">•••</span>
+        </button>
+      `;
+    }).join("");
+
     row.className = "word-row";
     row.innerHTML = `
       <div class="word-side">
         <span class="word">${escapeHtml(item.word)}</span>
         ${item.type ? `<span class="type">${escapeHtml(item.type)}</span>` : ""}
       </div>
-      <button class="meaning-button ${isVisible ? "" : "is-hidden"}" type="button" aria-expanded="${isVisible}">
-        <span class="meaning-text">${escapeHtml(item.meaning)}</span>
-        <span class="hidden-mark" aria-hidden="true">•••</span>
-      </button>
+      <div class="meaning-list">${meaningButtons}</div>
     `;
 
-    row.querySelector(".meaning-button").addEventListener("click", () => toggleMeaning(item.id));
+    row.querySelectorAll(".meaning-button").forEach((button, meaningIndex) => {
+      button.addEventListener("click", () => toggleMeaning(meaningId(item, meaningIndex)));
+    });
     elements.wordList.append(row);
   });
 
@@ -205,7 +206,11 @@ function toggleAllMeanings() {
   }
 
   if (allMeaningsHidden()) {
-    state.currentRange.words.forEach((item) => state.visibleIds.add(item.id));
+    state.currentRange.words.forEach((item) => {
+      item.meanings.forEach((meaning, meaningIndex) => {
+        state.visibleIds.add(meaningId(item, meaningIndex));
+      });
+    });
   } else {
     state.visibleIds.clear();
   }
@@ -223,7 +228,9 @@ function shuffleCurrentRange() {
 }
 
 function allMeaningsHidden() {
-  return !state.currentRange || state.currentRange.words.every((item) => !state.visibleIds.has(item.id));
+  return !state.currentRange || state.currentRange.words.every((item) => {
+    return item.meanings.every((meaning, meaningIndex) => !state.visibleIds.has(meaningId(item, meaningIndex)));
+  });
 }
 
 function updateToggleAllButton() {
@@ -245,6 +252,10 @@ function showStudyScreen() {
 
 function rangeLabel(range) {
   return `第${range.index}範囲 ${range.start + 1}-${range.end + 1}`;
+}
+
+function meaningId(item, meaningIndex) {
+  return `${item.id}-meaning-${meaningIndex}`;
 }
 
 function shuffle(items) {
