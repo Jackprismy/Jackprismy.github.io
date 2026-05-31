@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>古文単語帳</title>
+    <link rel="stylesheet" href="kotan.css">
+  </head>
+  <body>
+    <main class="app" aria-live="polite">
+      <section class="screen" id="rangeScreen" aria-labelledby="rangeTitle">
+        <header class="top">
+          <p class="label">古文単語帳</p>
+          <h1 id="rangeTitle">範囲を選ぶ</h1>
+        </header>
+
+        <div class="range-list" id="rangeList"></div>
+        <p class="status" id="rangeStatus" role="status"></p>
+      </section>
+
+      <section class="screen study-screen" id="studyScreen" aria-labelledby="studyTitle" hidden>
+        <header class="study-head">
+          <div class="study-top">
+            <button class="icon-button" type="button" id="backButton" aria-label="範囲選択へ戻る">←</button>
+            <div class="title-wrap">
+              <p class="label" id="studyLabel">範囲</p>
+              <h1 id="studyTitle">1-25</h1>
+            </div>
+          </div>
+
+          <div class="tools">
+            <button class="tool-button" type="button" id="shuffleButton">シャッフル</button>
+            <button class="tool-button" type="button" id="toggleAllButton">すべて見る</button>
+          </div>
+
+          <div class="columns" aria-hidden="true">
+            <span>単語</span>
+            <span>意味</span>
+          </div>
+        </header>
+
+        <div class="word-list" id="wordList"></div>
+      </section>
+    </main>
+
+    <script src="kotan.js" defer></script>
+  </body>
+</html>
