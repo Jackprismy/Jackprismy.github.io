@@ -18,7 +18,7 @@ const books = [
   }
 ];
 
-const RANGE_SIZE = 40;
+const RANGE_SIZE = 10;
 
 // =====================
 
