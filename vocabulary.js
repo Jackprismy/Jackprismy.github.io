@@ -192,8 +192,6 @@ function showQuestion() {
   meaningDiv.classList.add("hidden");
 
   answerButtons.classList.add("hidden");
-
-  speak(currentWord.word);
 }
 
 // =====================
