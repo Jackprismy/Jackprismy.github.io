@@ -260,7 +260,6 @@ function showQuestion() {
   elements.wordText.textContent = current.word;
   renderChoices(current);
 
-  window.setTimeout(() => speak(current.word), 120);
 }
 
 function renderChoices(current) {
