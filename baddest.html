@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#080B10">
+  <title>BADDEST — 単語帳</title>
+  <link rel="stylesheet" href="baddest.css">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+<div id="loading-overlay"><div class="loader-ring"></div></div>
+<div id="toast"></div>
+
+<div id="app">
+
+  <!-- ===== LOGIN ===== -->
+  <div id="screen-login" class="screen active">
+    <div class="login-brand">
+      <h1>BADDEST</h1>
+      <p>Vocabulary Training</p>
+    </div>
+    <div class="login-card">
+      <div class="input-group">
+        <label>メールアドレス</label>
+        <input type="email" id="login-email" placeholder="you@example.com" autocomplete="email">
+      </div>
+      <div class="input-group">
+        <label>パスワード</label>
+        <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div id="login-error" class="error-msg"></div>
+      <button class="btn btn-primary" id="btn-login">ログイン</button>
+      <button class="btn btn-secondary" id="btn-signup">新規登録</button>
+      <div class="login-divider">または</div>
+      <button class="btn btn-google" id="btn-google">
+        <svg width="18" height="18" viewBox="0 0 18 18">
+          <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
+          <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
+          <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.174 0 7.548 0 9s.348 2.826.957 4.039l3.007-2.332z"/>
+          <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/>
+        </svg>
+        Googleでログイン
+      </button>
+    </div>
+  </div>
+
+
+  <!-- ===== MAIN MENU ===== -->
+  <div id="screen-main" class="screen">
+    <div class="screen-content">
+      <div class="main-inner">
+
+        <div id="review-btn-wrap">
+          <button class="btn-review" id="btn-review">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+              <path d="M3 3v5h5"/>
+            </svg>
+            復習する
+          </button>
+        </div>
+
+        <div id="resume-banner">
+          <div class="resume-text">
+            <strong>続きから再開</strong><br>
+            <span id="resume-info"></span>
+          </div>
+          <button class="btn-resume" id="btn-resume">再開</button>
+        </div>
+
+        <div class="ring-wrap">
+          <svg id="progress-ring-svg" viewBox="0 0 180 180">
+            <circle id="ring-bg" cx="90" cy="90" r="70" stroke-width="8"/>
+            <circle id="ring-fg" cx="90" cy="90" r="70" stroke-width="8"
+              stroke-dasharray="439.82" stroke-dashoffset="439.82"/>
+          </svg>
+          <div class="ring-center">
+            <div class="ring-fraction" id="ring-fraction">0/50</div>
+            <div class="ring-percent"  id="ring-percent">0%</div>
+            <div class="ring-label">今日の進捗</div>
+          </div>
+        </div>
+
+        <div class="start-buttons">
+          <button class="btn-quick" id="btn-quick">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            クイックスタート
+          </button>
+          <div class="btn-custom-wrap">
+            <button class="btn-custom" id="btn-custom-toggle">
+              <span>カスタムスタート</span>
+              <svg class="custom-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            <div class="custom-panel" id="custom-panel">
+              <div class="custom-field">
+                <label>出題範囲</label>
+                <div class="custom-range-row">
+                  <input type="number" id="custom-start" value="1" min="1" placeholder="開始">
+                  <span>〜</span>
+                  <input type="number" id="custom-end" value="800" min="1" placeholder="終了">
+                </div>
+              </div>
+              <div class="custom-field">
+                <label>問題数</label>
+                <input type="number" id="custom-count" value="50" min="1" max="500">
+              </div>
+              <button class="btn-custom-start" id="btn-custom-start">スタート</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ===== STUDY ===== -->
+  <div id="screen-study" class="screen">
+    <div class="study-header">
+      <span class="study-progress-text" id="study-progress-text">1 / 10</span>
+      <div class="study-progress-bar">
+        <div class="study-progress-fill" id="study-progress-fill" style="width:0%"></div>
+      </div>
+      <button class="btn-exit" id="btn-exit-study" aria-label="終了">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="study-body" id="study-body">
+      <div class="feedback-overlay" id="feedback-overlay"></div>
+
+      <div class="wrong-overlay" id="wrong-overlay">
+        <div class="wrong-word-en" id="wrong-word-en"></div>
+        <div class="wrong-word-ja" id="wrong-word-ja"></div>
+      </div>
+
+      <div class="word-card" id="word-card">
+        <!-- 品詞 + 発音ボタン -->
+        <div class="word-card-top">
+          <div class="word-pos" id="word-pos">動</div>
+          <button class="btn-pronounce" id="btn-pronounce" aria-label="発音を聞く">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="word-en" id="word-en">claim O</div>
+
+        <div class="answer-input-wrap">
+          <input type="text" class="answer-input" id="answer-input"
+            placeholder="意味を入力 → Enter"
+            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        </div>
+
+        <div class="reveal-area" id="reveal-area">
+          <div>
+            <div class="reveal-label">正解</div>
+            <div class="reveal-correct" id="reveal-correct"></div>
+          </div>
+          <div>
+            <div class="reveal-label">あなたの回答</div>
+            <div class="reveal-yours" id="reveal-yours"></div>
+          </div>
+        </div>
+
+        <div class="action-buttons" id="action-buttons">
+          <button class="btn-correct" id="btn-correct">できた ✓</button>
+          <button class="btn-wrong"   id="btn-wrong">できなかった ✗</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ===== RESULT ===== -->
+  <div id="screen-result" class="screen">
+    <div class="result-inner">
+      <div id="result-header" class="result-header"></div>
+      <div id="result-wrong-section">
+        <div class="result-section-title">間違えた問題</div>
+        <div class="word-list" id="result-wrong-list"></div>
+      </div>
+      <div>
+        <div class="result-section-title">正解した問題</div>
+        <div class="word-list" id="result-correct-list"></div>
+      </div>
+      <div class="result-actions">
+        <button class="btn btn-amber"  id="btn-retry"       style="display:none">もう一度解く</button>
+        <button class="btn btn-primary" id="btn-next"       style="display:none">Next →</button>
+        <button class="btn btn-ghost"   id="btn-home-result">ホームに戻る</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ===== DATA ===== -->
+  <div id="screen-data" class="screen">
+    <div class="screen-content">
+      <div class="data-inner">
+        <div class="screen-title">データ</div>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-card-label">解いた問題数</div>
+            <div class="stat-card-value green" id="stat-solved">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">今日の問題数</div>
+            <div class="stat-card-value amber" id="stat-daily">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">間違えた単語</div>
+            <div class="stat-card-value red" id="stat-missed">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">デイリー目標</div>
+            <div class="stat-card-value" id="stat-goal">50</div>
+          </div>
+        </div>
+        <div class="missed-list-wrap">
+          <div class="missed-list-header">
+            <h3>間違えた単語リスト</h3>
+            <button class="btn-review-list" id="btn-review-from-list">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                <path d="M3 3v5h5"/>
+              </svg>
+              リストから復習
+            </button>
+          </div>
+          <div id="missed-word-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ===== SETTINGS ===== -->
+  <div id="screen-settings" class="screen">
+    <div class="screen-content">
+      <div class="settings-inner">
+        <div class="screen-title">設定</div>
+        <div class="settings-section">
+          <div class="settings-row">
+            <div class="settings-row-left">
+              <div class="settings-row-title">デイリー目標</div>
+              <div class="settings-row-sub">1日の目標問題数</div>
+            </div>
+            <input type="number" class="settings-number-input" id="setting-daily" value="50" min="1" max="9999">
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-left">
+              <div class="settings-row-title">自動発音</div>
+              <div class="settings-row-sub">英単語表示時に読み上げ</div>
+            </div>
+            <label class="toggle-wrap">
+              <input type="checkbox" id="setting-autoplay">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+        <button class="btn-logout" id="btn-logout">ログアウト</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ===== BOTTOM NAV ===== -->
+  <nav id="bottom-nav" style="display:none">
+    <div class="nav-item active" data-screen="main">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+      <span>ホーム</span>
+    </div>
+    <div class="nav-item" data-screen="data">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="20" x2="18" y2="10"/>
+        <line x1="12" y1="20" x2="12" y2="4"/>
+        <line x1="6"  y1="20" x2="6"  y2="14"/>
+      </svg>
+      <span>データ</span>
+    </div>
+    <div class="nav-item" data-screen="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+      <span>設定</span>
+    </div>
+  </nav>
+
+</div>
+
+<script src="baddest.js"></script>
+</body>
+</html>
