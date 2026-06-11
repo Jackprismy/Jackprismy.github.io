@@ -126,12 +126,12 @@ async function saveProgress() {
 //  count の意味:
 //    初回ミス → 2でセット (次の日 + さらにその次の日の2回分)
 //    復習正解 → -1 (0になったら削除)
-//    復習不正解 → +1 (上限4)
+//    復習不正解 → +1 (上限4から2に変更)
 //  getReviewWords() は lastDate < today の単語を返す
 // ============================================
 const MISSED_CHUNK  = 500;
 const MISSED_INIT   = 2;   // 初回ミス時のカウント初期値
-const MISSED_MAX    = 4;   // カウント上限
+const MISSED_MAX    = 2;   // カウント上限
 
 let missedWords = {};
 
