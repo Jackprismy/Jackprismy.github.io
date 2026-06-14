@@ -23,6 +23,23 @@ function initFirebase() {
     db   = firebase.firestore();
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     setLoadingStatus('接続中...', 'Firebaseに接続しています');
+
+    // リダイレクト方式のGoogle認証結果を回収する
+    // （ページリロード後に呼ばれ、onAuthStateChanged より先に処理）
+    auth.getRedirectResult()
+      .then(result => {
+        // result.user があれば onAuthStateChanged が自動的に拾うので追加処理不要
+        if (result && result.user) {
+          setLoadingStatus('ログイン成功！', 'データを読み込んでいます...');
+        }
+      })
+      .catch(e => {
+        console.error('getRedirectResult error:', e);
+        const errEl = document.getElementById('login-error');
+        if (errEl) errEl.textContent = getAuthError(e.code);
+        hideLoading();
+      });
+
     auth.onAuthStateChanged(user => {
       if (user) { currentUser = user; onUserLoggedIn(); }
       else      { currentUser = null; showScreen('login'); hideLoading(); }
@@ -968,9 +985,19 @@ async function signupEmail() {
   catch (e) { hideLoading(); err.textContent = getAuthError(e.code); }
 }
 async function loginGoogle() {
-  showLoading('Googleでログイン中...');
-  try { await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
-  catch (e) { hideLoading(); document.getElementById('login-error').textContent = getAuthError(e.code); }
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = '';
+  showLoading('Googleでログイン中...', 'Googleの認証ページへ移動します');
+  try {
+    // モバイルブラウザではポップアップがブロックされるためリダイレクト方式を使用。
+    // ページを離脱→Google認証→戻ってくる流れ。結果は initFirebase の
+    // getRedirectResult() と onAuthStateChanged が処理する。
+    const provider = new firebase.auth.GoogleAuthProvider();
+    await auth.signInWithRedirect(provider);
+  } catch (e) {
+    hideLoading();
+    errEl.textContent = getAuthError(e.code);
+  }
 }
 function logout() {
   auth.signOut().then(() => {
@@ -981,13 +1008,18 @@ function logout() {
 }
 function getAuthError(code) {
   const map = {
-    'auth/user-not-found':       'ユーザーが見つかりません',
-    'auth/wrong-password':       'パスワードが違います',
-    'auth/email-already-in-use': 'このメールは使用中です',
-    'auth/invalid-email':        'メールアドレスが不正です',
-    'auth/weak-password':        'パスワードが弱すぎます',
-    'auth/popup-closed-by-user': 'ポップアップが閉じられました',
-    'auth/invalid-credential':   'メールまたはパスワードが正しくありません',
+    'auth/user-not-found':              'ユーザーが見つかりません',
+    'auth/wrong-password':              'パスワードが違います',
+    'auth/email-already-in-use':        'このメールは使用中です',
+    'auth/invalid-email':               'メールアドレスが不正です',
+    'auth/weak-password':               'パスワードが弱すぎます',
+    'auth/popup-closed-by-user':        'ポップアップが閉じられました',
+    'auth/invalid-credential':          'メールまたはパスワードが正しくありません',
+    'auth/cancelled-popup-request':     'ログインがキャンセルされました',
+    'auth/redirect-cancelled-by-user':  'ログインがキャンセルされました',
+    'auth/unauthorized-domain':         'このドメインはFirebaseで許可されていません。Firebase ConsoleのAuthenticationで承認済みドメインに追加してください',
+    'auth/operation-not-allowed':       'GoogleログインがFirebaseで有効になっていません',
+    'auth/network-request-failed':      'ネットワークエラー。接続を確認してください',
   };
   return map[code] || `エラー: ${code}`;
 }
