@@ -423,24 +423,40 @@ function updateMainMenu() {
   }
 
   // カスタムコース進行ボタン
-  const courseBtn    = document.getElementById('btn-custom-course');
-  const courseToggle = document.getElementById('btn-custom-toggle');
+  const courseBtn   = document.getElementById('btn-custom-course');
+  const startCard   = document.getElementById('custom-start-card');
+  const customResumeBanner = document.getElementById('custom-resume-banner');
   if (customCourse && customCourse.active) {
-    courseBtn.style.display    = '';
-    courseToggle.style.display = 'none';
+    // コースアクティブ: 進行ボタンを表示、設定カードを非表示
+    courseBtn.style.display  = '';
+    startCard.style.display  = 'none';
     const prog    = customCourseProgress();
     const progPct = Math.round(prog * 100);
     const total   = customCourse.totalInRange || 0;
     const done2   = customCourse.completedIds.length;
     document.getElementById('custom-course-fill').style.width  = `${progPct}%`;
     document.getElementById('custom-course-title').textContent =
-      `カスタム (${customCourse.rangeStart}〜${customCourse.rangeEnd})`;
+      `カスタム ${customCourse.rangeStart}〜${customCourse.rangeEnd}`;
     document.getElementById('custom-course-info').textContent  =
       `${done2} / ${total} 問完了`;
     document.getElementById('custom-course-pct').textContent   = `${progPct}%`;
+
+    // バッチ進行中（中断あり）ならカスタム再開バナーを表示
+    const hasBatchInProgress = customCourse.currentBatch &&
+      customCourse.currentBatch.length > 0 &&
+      customCourse.batchIdx < customCourse.currentBatch.length;
+    if (hasBatchInProgress) {
+      const remInBatch = customCourse.currentBatch.length - customCourse.batchIdx;
+      customResumeBanner.classList.add('visible');
+      document.getElementById('custom-resume-info').textContent =
+        `現在のセット (残り${remInBatch}問)`;
+    } else {
+      customResumeBanner.classList.remove('visible');
+    }
   } else {
-    courseBtn.style.display    = 'none';
-    courseToggle.style.display = '';
+    courseBtn.style.display  = 'none';
+    startCard.style.display  = '';
+    customResumeBanner.classList.remove('visible');
   }
 
   document.getElementById('setting-daily').value      = settings.dailyGoal || 50;
@@ -621,7 +637,7 @@ function showCustomComplete() {
   document.getElementById('btn-retry').style.display              = 'none';
   document.getElementById('btn-next').style.display               = 'none';
   document.getElementById('btn-complete').style.display           = '';
-  document.getElementById('btn-home-result').style.display        = 'none';
+  document.getElementById('btn-home-result').style.display        = '';
 }
 
 // ---- クイック/復習セッション再開 ----
@@ -887,18 +903,15 @@ function showResultScreen() {
   const btnComplete = document.getElementById('btn-complete');
 
   if (isCustom) {
-    // カスタム: 間違いあり→もう一度 / 全正解→Next
+    // カスタム: 間違いあり→もう一度解く / 全正解→次のバッチへ(Next)
     btnRetry.style.display    = allOK ? 'none' : '';
     btnComplete.style.display = 'none';
-    if (allOK) {
-      // 残り問題数をNextボタンに表示
-      const remaining = customCourse
-        ? customCourse.totalInRange - customCourse.completedIds.length
-        : 0;
-      btnNext.style.display   = '';
-      btnNext.textContent     = remaining > 0 ? `Next → (残り${remaining}問)` : 'Next →';
+    btnNext.style.display     = allOK ? '' : 'none';
+    if (allOK && customCourse) {
+      const remaining = customCourse.totalInRange - customCourse.completedIds.length;
+      btnNext.textContent = remaining > 0 ? `Next → (残り${remaining}問)` : 'Next →';
     } else {
-      btnNext.style.display   = 'none';
+      btnNext.textContent = 'Next →';
     }
   } else {
     btnRetry.style.display    = allOK ? 'none' : '';
@@ -1029,17 +1042,35 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast('セッションを破棄しました');
   });
 
-  // カスタム設定パネル
-  document.getElementById('btn-custom-toggle').addEventListener('click', () => {
-    const panel   = document.getElementById('custom-panel');
-    const chevron = document.querySelector('.custom-chevron');
-    const open    = panel.classList.toggle('open');
-    chevron.classList.toggle('open', open);
-  });
+  // カスタムスタートカード
   document.getElementById('btn-custom-start').addEventListener('click', startCustomCourse);
 
-  // カスタムコース進行ボタン（アクティブ時）
-  document.getElementById('btn-custom-course').addEventListener('click', resumeCustomCourse);
+  // カスタムコース進行ボタン（アクティブ時：中断中なら再開、なければ次のバッチ）
+  document.getElementById('btn-custom-course').addEventListener('click', () => {
+    if (!customCourse) return;
+    const hasBatchInProgress = customCourse.currentBatch &&
+      customCourse.currentBatch.length > 0 &&
+      customCourse.batchIdx < customCourse.currentBatch.length;
+    if (hasBatchInProgress) {
+      resumeCustomCourse();
+    } else {
+      startNextCustomBatch();
+    }
+  });
+
+  // カスタムコース再開バナー
+  document.getElementById('btn-custom-resume').addEventListener('click', resumeCustomCourse);
+  document.getElementById('btn-custom-resume-dismiss').addEventListener('click', async e => {
+    e.stopPropagation();
+    // バッチをリセット（コース自体は継続）
+    if (customCourse) {
+      customCourse.currentBatch = [];
+      customCourse.batchIdx     = 0;
+      await saveCustomCourse();
+    }
+    updateMainMenu();
+    showToast('現在のセットを破棄しました');
+  });
 
   // Data
   document.getElementById('btn-review-from-list').addEventListener('click', startReviewFromList);
