@@ -134,32 +134,23 @@
           </div>
 
           <!-- カスタムコース進行ボタン（アクティブ時に表示） -->
-          <button class="btn-custom-course" id="btn-custom-course" style="display:none">
-            <div class="custom-course-fill" id="custom-course-fill"></div>
-            <div class="custom-course-content">
-              <div class="custom-course-title" id="custom-course-title">カスタムコース</div>
-              <div class="custom-course-info"  id="custom-course-info">0% 完了</div>
-            </div>
-            <div class="custom-course-right">
-              <div class="custom-course-pct" id="custom-course-pct">0%</div>
-              <div class="custom-course-cta">続きから →</div>
-            </div>
-          </button>
-
-          <!-- カスタムコース再開バナー（バッチ中断時） -->
-          <div id="custom-resume-banner">
-            <div class="resume-text">
-              <strong>カスタムを再開</strong><br>
-              <span id="custom-resume-info"></span>
-            </div>
-            <div class="resume-actions">
-              <button class="btn-resume" id="btn-custom-resume">再開</button>
-              <button class="btn-resume-dismiss" id="btn-custom-resume-dismiss" aria-label="破棄">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </button>
-            </div>
+          <div class="custom-course-wrap" id="custom-course-wrap" style="display:none">
+            <button class="btn-custom-course" id="btn-custom-course">
+              <div class="custom-course-fill" id="custom-course-fill"></div>
+              <div class="custom-course-content">
+                <div class="custom-course-title" id="custom-course-title">カスタムコース</div>
+                <div class="custom-course-info"  id="custom-course-info">0% 完了</div>
+              </div>
+              <div class="custom-course-right">
+                <div class="custom-course-pct" id="custom-course-pct">0%</div>
+                <div class="custom-course-cta" id="custom-course-cta">続きから →</div>
+              </div>
+            </button>
+            <button class="btn-custom-course-dismiss" id="btn-custom-course-dismiss" aria-label="コースを終了">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
           </div>
         </div>
 
