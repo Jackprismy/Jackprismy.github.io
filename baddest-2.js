@@ -360,24 +360,23 @@ function esc(s) {
 //  ログイン後の初期化
 // ============================================
 async function onUserLoggedIn() {
-  showLoading('認証確認中...', 'ユーザー情報を取得しています');
-
-  // 1) 設定・進捗を取得（missedより先に完了しやすいものを先行）
-  setLoadingStatus('設定を読み込んでいます', 'step 1/3');
-  await Promise.allSettled([ loadSettings(), loadProgress() ]);
-
-  // 2) missedWords（コレクション取得）
-  setLoadingStatus('単語データを読み込んでいます', 'step 2/3');
-  await Promise.allSettled([ loadMissed() ]);
-
-  // 3) セッション情報
-  setLoadingStatus('セッション情報を読み込んでいます', 'step 3/3');
-  await Promise.allSettled([ loadCurrentSession(), loadCustomCourse() ]);
-
-  // 完了 → 画面表示
-  showScreen('main');
-  updateMainMenu();
-  hideLoading();
+  showLoading('データを読み込んでいます...');
+  try {
+    await Promise.allSettled([
+      loadSettings(),
+      loadProgress(),
+      loadMissed(),
+      loadCurrentSession(),
+      loadCustomCourse(),
+    ]);
+    showScreen('main');
+    updateMainMenu();
+  } catch (e) {
+    console.error('onUserLoggedIn error:', e);
+  } finally {
+    // 何があっても必ずローディングを消す
+    hideLoading();
+  }
 }
 
 // ============================================
@@ -398,7 +397,7 @@ function updateMainMenu() {
   const lapPct = pct - lap;
   fg.setAttribute('stroke-dasharray', C);
   fg.setAttribute('stroke-dashoffset', C - C * lapPct);
-  fg.className = '';
+  fg.setAttribute('class', '');  // SVGElementはsetAttributeで変更
   const pctEl = document.getElementById('ring-percent');
   pctEl.className = 'ring-percent';
   if (lap > 0) {
