@@ -412,41 +412,29 @@ body {
 }
 .btn-quick:active { transform: scale(0.97); }
 
-.btn-custom-wrap {
+/* ---- カスタムスタートカード（常時表示） ---- */
+.custom-start-card {
   width: 100%;
-}
-
-.btn-custom {
-  width: 100%;
-  background: linear-gradient(135deg, #1A2035, #222B40);
-  color: var(--silver);
+  background: linear-gradient(135deg, #141B2E, #1C2540);
   border: 1px solid var(--border-em);
   border-radius: var(--radius-md);
-  padding: 14px 16px;
+  overflow: hidden;
+}
+.custom-start-header {
+  padding: 10px 16px 0;
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--silver-dim);
+}
+.custom-start-body {
+  padding: 10px 14px 14px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  transition: transform 0.15s;
-}
-.btn-custom:active { transform: scale(0.97); }
-.custom-chevron { transition: transform 0.3s; }
-.custom-chevron.open { transform: rotate(180deg); }
-
-.custom-panel {
-  background: rgba(13,17,23,0.6);
-  border: 1px solid var(--border);
-  border-top: none;
-  border-radius: 0 0 var(--radius-md) var(--radius-md);
-  padding: 14px;
-  display: none;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
-.custom-panel.open { display: flex; }
 
 .custom-field label {
   display: block;
@@ -497,57 +485,95 @@ body {
 .btn-custom-course {
   width: 100%;
   position: relative;
-  border: 1px solid var(--border-em);
+  border: 1px solid rgba(0,200,151,0.25);
   border-radius: var(--radius-md);
-  padding: 14px 16px;
-  background: #1A2035;
+  padding: 13px 16px;
+  background: #101A18;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: space-between;
   overflow: hidden;
-  transition: transform 0.15s;
-  min-height: 56px;
+  transition: transform 0.15s, border-color 0.3s;
+  min-height: 62px;
+  gap: 10px;
 }
 .btn-custom-course:active { transform: scale(0.97); }
 
-/* 進捗フィル（左から右に伸びる） */
+/* 進捗フィル（左から右に伸びる、グラデーション） */
 .custom-course-fill {
   position: absolute;
   left: 0; top: 0; bottom: 0;
   width: 0%;
-  background: linear-gradient(90deg, rgba(0,200,151,0.25), rgba(0,200,151,0.10));
-  border-right: 2px solid rgba(0,200,151,0.4);
-  transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+  background: linear-gradient(90deg,
+    rgba(0,200,151,0.30) 0%,
+    rgba(0,200,151,0.15) 70%,
+    transparent 100%
+  );
+  border-right: 2px solid rgba(0,200,151,0.5);
+  transition: width 0.7s cubic-bezier(0.4,0,0.2,1);
   pointer-events: none;
 }
 
 .custom-course-content {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   z-index: 1;
+  flex: 1;
+  min-width: 0;
 }
 .custom-course-title {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 0.88rem;
+  font-weight: 700;
   color: var(--silver);
   text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .custom-course-info {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: var(--silver-dim);
   text-align: left;
 }
-.custom-course-pct {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--green);
+.custom-course-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
   z-index: 1;
   flex-shrink: 0;
 }
+.custom-course-pct {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--green);
+  line-height: 1;
+}
+.custom-course-cta {
+  font-size: 0.65rem;
+  color: var(--silver-dim);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+/* カスタムコース再開バナー（バッチ中断時） */
+#custom-resume-banner {
+  display: none;
+  background: linear-gradient(135deg, #0E1A10, #162210);
+  border: 1px solid rgba(0,200,151,0.2);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-shrink: 0;
+}
+#custom-resume-banner.visible { display: flex; }
 
 /* ============================================
    STUDY SCREEN
@@ -1342,7 +1368,7 @@ body {
   .word-card        { padding: 22px 18px; }
   .ring-percent     { font-size: 1.5rem; }
   .btn-quick        { padding: 13px; }
-  .btn-custom       { padding: 11px 14px; }
+  .custom-start-body { padding: 8px 12px 12px; gap: 8px; }
 }
 @media (max-height: 580px) {
   .word-card        { padding: 16px 14px; }
