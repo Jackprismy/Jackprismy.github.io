@@ -16,6 +16,9 @@ const FIREBASE_CONFIG = {
 // ============================================
 let auth, db, currentUser;
 
+// Google リダイレクト中フラグ (sessionStorage は同一タブ内でページ遷移を越えて保持)
+const GOOGLE_REDIRECT_KEY = 'baddest_google_redirect';
+
 function initFirebase() {
   try {
     firebase.initializeApp(FIREBASE_CONFIG);
@@ -24,25 +27,38 @@ function initFirebase() {
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     setLoadingStatus('接続中...', 'Firebaseに接続しています');
 
-    // リダイレクト方式のGoogle認証結果を回収する
-    // （ページリロード後に呼ばれ、onAuthStateChanged より先に処理）
+    // ── Google リダイレクト結果の処理 ──────────────────────
+    // signInWithRedirect でページを離脱し Google 認証後に戻ってくると
+    // onAuthStateChanged が一瞬 null で発火してログイン画面を表示してしまう。
+    // sessionStorage にフラグを立て「リダイレクト処理中」を通知することで防ぐ。
     auth.getRedirectResult()
       .then(result => {
-        // result.user があれば onAuthStateChanged が自動的に拾うので追加処理不要
+        sessionStorage.removeItem(GOOGLE_REDIRECT_KEY);   // フラグ解除
         if (result && result.user) {
           setLoadingStatus('ログイン成功！', 'データを読み込んでいます...');
+          // onAuthStateChanged が user で再発火するので追加処理不要
         }
       })
       .catch(e => {
+        sessionStorage.removeItem(GOOGLE_REDIRECT_KEY);   // フラグ解除
         console.error('getRedirectResult error:', e);
         const errEl = document.getElementById('login-error');
         if (errEl) errEl.textContent = getAuthError(e.code);
+        showScreen('login');
         hideLoading();
       });
 
     auth.onAuthStateChanged(user => {
-      if (user) { currentUser = user; onUserLoggedIn(); }
-      else      { currentUser = null; showScreen('login'); hideLoading(); }
+      if (user) {
+        currentUser = user;
+        onUserLoggedIn();
+      } else {
+        // リダイレクト処理中なら getRedirectResult の完了を待つ（ログイン画面を出さない）
+        if (sessionStorage.getItem(GOOGLE_REDIRECT_KEY)) return;
+        currentUser = null;
+        showScreen('login');
+        hideLoading();
+      }
     });
   } catch (e) {
     console.error('Firebase init:', e);
@@ -989,12 +1005,14 @@ async function loginGoogle() {
   errEl.textContent = '';
   showLoading('Googleでログイン中...', 'Googleの認証ページへ移動します');
   try {
-    // モバイルブラウザではポップアップがブロックされるためリダイレクト方式を使用。
-    // ページを離脱→Google認証→戻ってくる流れ。結果は initFirebase の
-    // getRedirectResult() と onAuthStateChanged が処理する。
+    // リダイレクト前にフラグを立てる。
+    // 戻ってきたとき onAuthStateChanged が null で発火してもログイン画面を出さない。
+    sessionStorage.setItem(GOOGLE_REDIRECT_KEY, '1');
     const provider = new firebase.auth.GoogleAuthProvider();
     await auth.signInWithRedirect(provider);
+    // ↑ この行以降は実行されない（ページ遷移するため）
   } catch (e) {
+    sessionStorage.removeItem(GOOGLE_REDIRECT_KEY);
     hideLoading();
     errEl.textContent = getAuthError(e.code);
   }
