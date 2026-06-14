@@ -482,8 +482,16 @@ body {
 .btn-custom-start:active { transform: scale(0.97); }
 
 /* ---- カスタムコース進行ボタン ---- */
-.btn-custom-course {
+.custom-course-wrap {
   width: 100%;
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.btn-custom-course {
+  flex: 1;
+  min-width: 0;
   position: relative;
   border: 1px solid rgba(0,200,151,0.25);
   border-radius: var(--radius-md);
@@ -560,20 +568,24 @@ body {
   white-space: nowrap;
 }
 
-/* カスタムコース再開バナー（バッチ中断時） */
-#custom-resume-banner {
-  display: none;
-  background: linear-gradient(135deg, #0E1A10, #162210);
-  border: 1px solid rgba(0,200,151,0.2);
-  border-radius: var(--radius-md);
-  padding: 10px 14px;
-  width: 100%;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+/* バツボタン（コース破棄） */
+.btn-custom-course-dismiss {
   flex-shrink: 0;
+  width: 44px;
+  background: rgba(255,77,106,0.08);
+  border: 1px solid rgba(255,77,106,0.25);
+  border-radius: var(--radius-md);
+  color: var(--red);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
 }
-#custom-resume-banner.visible { display: flex; }
+.btn-custom-course-dismiss:active {
+  transform: scale(0.92);
+  background: rgba(255,77,106,0.22);
+}
 
 /* ============================================
    STUDY SCREEN
