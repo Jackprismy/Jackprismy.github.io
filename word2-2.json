@@ -238,7 +238,7 @@
   {"word":"pregnant","pos":"形","meaning":"妊娠した"},
   {"word":"clinical","pos":"形","meaning":"臨床の"},
   {"word":"heal O","pos":"動","meaning":"Oを治す"},
-  {"word":"infect A with B","pos":"動","meaning":"AをBに感染させる"},
+  {"word":"infect A with B","pos":"動","meaning":"AにBを感染させる"},
   {"word":"ankle","pos":"名","meaning":"足首"},
   {"word":"thumb","pos":"名","meaning":"親指"},
   {"word":"forehead","pos":"名","meaning":"額"},
