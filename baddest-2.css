@@ -1073,23 +1073,99 @@ body {
   margin-bottom: 10px;
 }
 
-.btn-review-list {
-  background: linear-gradient(135deg, #7C3AED, #4D9FFF);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius-sm);
-  padding: 7px 12px;
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
+.missed-list-header {
   display: flex;
   align-items: center;
-  gap: 5px;
-  transition: transform 0.15s, opacity 0.15s;
+  justify-content: space-between;
+  margin-bottom: 6px;
 }
-.btn-review-list:active   { transform: scale(0.95); opacity: 0.85; }
-.btn-review-list:disabled { opacity: 0.35; pointer-events: none; }
+
+/* ---- リスト復習コーストラック ---- */
+.review-track-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+/* × キャンセルボタン */
+.review-cancel-btn {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(255,77,106,0.12);
+  border: 1.5px solid rgba(255,77,106,0.45);
+  color: var(--red);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.12s;
+}
+.review-cancel-btn:active {
+  transform: scale(0.88);
+  background: rgba(255,77,106,0.28);
+}
+
+/* メイントラックカード */
+.review-track-card {
+  flex: 1;
+  min-width: 0;
+  background: rgba(0,200,151,0.04);
+  border: 1px solid rgba(0,200,151,0.18);
+  border-radius: 14px;
+  padding: 6px 10px 4px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  transition: background 0.15s, transform 0.12s;
+}
+.review-track-card:active  { transform: scale(0.98); background: rgba(0,200,151,0.09); }
+.review-track-card:disabled { opacity: 0.45; cursor: default; pointer-events: none; }
+
+/* SVGラッパー (足跡の絶対配置用) */
+.review-svg-wrap {
+  position: relative;
+  width: 100%;
+  height: 48px;
+}
+.review-track-svg {
+  width: 100%;
+  height: 48px;
+  display: block;
+  overflow: visible;
+}
+
+/* 足跡 (SVG上を移動するHTML要素) */
+.review-track-foot {
+  position: absolute;
+  font-size: 17px;
+  line-height: 1;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  user-select: none;
+  /* CSS transitionで滑らかに移動 */
+  transition: left 0.65s cubic-bezier(0.4,0,0.2,1),
+              top  0.65s cubic-bezier(0.4,0,0.2,1);
+  will-change: left, top;
+  /* 初期位置 (x=8/280≈2.9%, y=24/48=50%) */
+  left: 2.9%;
+  top: 50%;
+}
+
+/* 情報テキスト */
+.review-track-info {
+  font-size: 0.67rem;
+  color: var(--silver-dim);
+  text-align: center;
+  padding: 3px 0 3px;
+  letter-spacing: 0.2px;
+}
+
 .missed-word-row {
   background: var(--bg-card);
   border: 1px solid rgba(255,77,106,0.2);
