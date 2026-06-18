@@ -253,13 +253,45 @@
         <div class="missed-list-wrap">
           <div class="missed-list-header">
             <h3>間違えた単語リスト</h3>
-            <button class="btn-review-list" id="btn-review-from-list">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
+          </div>
+
+          <!-- ── リスト復習コーストラック ── -->
+          <div class="review-track-row" id="review-track-row">
+            <button class="review-cancel-btn" id="btn-review-course-cancel"
+                    aria-label="復習コースを終了" style="display:none">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="3">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
               </svg>
-              リストから復習
+            </button>
+            <button class="review-track-card" id="btn-review-from-list">
+              <div class="review-svg-wrap">
+                <svg class="review-track-svg" id="review-track-svg"
+                     viewBox="0 0 280 48" preserveAspectRatio="none">
+                  <defs>
+                    <clipPath id="review-done-clip">
+                      <rect id="review-done-rect" x="0" y="0" width="0" height="48"/>
+                    </clipPath>
+                  </defs>
+                  <path id="review-path-bg"
+                    d="M 8,24 C 28,7 50,5 76,24 C 102,43 126,44 150,24 C 174,4 198,3 222,24 C 246,44 262,43 272,24"
+                    fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="2.5"
+                    stroke-dasharray="5,5" stroke-linecap="round"/>
+                  <path
+                    d="M 8,24 C 28,7 50,5 76,24 C 102,43 126,44 150,24 C 174,4 198,3 222,24 C 246,44 262,43 272,24"
+                    fill="none" stroke="#00C897" stroke-width="3"
+                    stroke-dasharray="5,5" stroke-linecap="round"
+                    clip-path="url(#review-done-clip)"/>
+                  <text x="278" y="24" text-anchor="middle" dominant-baseline="middle"
+                        font-size="13" opacity="0.45" style="user-select:none">&#x1F3AF;</text>
+                </svg>
+                <div class="review-track-foot" id="review-track-foot">&#x1F43E;</div>
+              </div>
+              <div class="review-track-info" id="review-track-info">タップして復習スタート</div>
             </button>
           </div>
+
           <div id="missed-word-list"></div>
         </div>
       </div>
