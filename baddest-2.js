@@ -416,6 +416,7 @@ async function onUserLoggedIn() {
       loadMissed(),
       loadCurrentSession(),
       loadCustomCourse(),
+      loadReviewCourse(),
     ]);
     showScreen('main');
     updateMainMenu();
@@ -515,8 +516,7 @@ async function updateDataScreen() {
   document.getElementById('stat-missed').textContent  = Object.keys(missedWords).length;
   document.getElementById('stat-goal').textContent    = settings.dailyGoal || 50;
 
-  const reviewListBtn = document.getElementById('btn-review-from-list');
-  if (reviewListBtn) reviewListBtn.disabled = Object.keys(missedWords).length === 0;
+  updateReviewTrack();
 
   const list = document.getElementById('missed-word-list');
   list.innerHTML = '';
@@ -533,6 +533,73 @@ async function updateDataScreen() {
       </div>
       <div class="missed-count">${d.count}</div>`;
     list.appendChild(row);
+  }
+}
+
+// ============================================
+//  リスト復習コース
+//  Firestore: data/reviewCourse
+//  { active, completedIds, currentBatch, batchIdx }
+// ============================================
+let reviewCourse = null;
+
+async function loadReviewCourse() {
+  try {
+    const snap = await getWithTimeout(dataDoc('reviewCourse'));
+    if (snap.exists) { const d = snap.data(); if (d.active) reviewCourse = d; }
+  } catch (e) { console.error('loadReviewCourse:', e); }
+}
+async function saveReviewCourse() {
+  try {
+    if (reviewCourse) await dataDoc('reviewCourse').set({ ...reviewCourse, active: true });
+    else              await dataDoc('reviewCourse').set({ active: false });
+  } catch (e) { console.error('saveReviewCourse:', e); }
+}
+async function clearReviewCourse() {
+  reviewCourse = null;
+  await saveReviewCourse();
+}
+
+// トラックUI更新（データ画面）
+function updateReviewTrack() {
+  const totalMissed = Object.keys(missedWords).length;
+  const done        = reviewCourse ? reviewCourse.completedIds.length : 0;
+  const progress    = (totalMissed > 0 && done > 0) ? Math.min(done / totalMissed, 1) : 0;
+
+  const cancelBtn = document.getElementById('btn-review-course-cancel');
+  const infoEl    = document.getElementById('review-track-info');
+  const foot      = document.getElementById('review-track-foot');
+  const doneRect  = document.getElementById('review-done-rect');
+  const path      = document.getElementById('review-path-bg');
+  const trackCard = document.getElementById('btn-review-from-list');
+  if (!trackCard || !path) return;
+
+  // SVGパス上の位置を計算して足跡とクリップを更新
+  try {
+    const totalLen = path.getTotalLength();
+    const doneLen  = totalLen * progress;
+    const pt       = path.getPointAtLength(doneLen);
+    // ViewBox は 280×48
+    doneRect.setAttribute('width', Math.max(0, pt.x + 1));
+    foot.style.left = `${(pt.x / 280) * 100}%`;
+    foot.style.top  = `${(pt.y / 48)  * 100}%`;
+  } catch (e) { /* SVG未レンダリング時は無視 */ }
+
+  if (reviewCourse && reviewCourse.active) {
+    cancelBtn.style.display = '';
+    trackCard.disabled      = false;
+    const hasBatch = reviewCourse.currentBatch &&
+                     reviewCourse.currentBatch.length > 0 &&
+                     reviewCourse.batchIdx < reviewCourse.currentBatch.length;
+    const remaining = totalMissed - done;
+    const ctaText   = hasBatch ? '続きを再開 →' : (remaining > 0 ? '次のセットへ →' : '復習完了！');
+    infoEl.textContent = `${done} / ${totalMissed} 問 · ${ctaText}`;
+  } else {
+    cancelBtn.style.display = 'none';
+    trackCard.disabled      = totalMissed === 0;
+    infoEl.textContent      = totalMissed > 0
+      ? `${totalMissed} 問を復習 · タップしてスタート`
+      : '間違えた単語なし';
   }
 }
 
@@ -713,17 +780,80 @@ async function startReview() {
   hideLoading();
 }
 
+// リスト復習コース: カード/ボタンをタップしたときの処理
 async function startReviewFromList() {
-  const ids = Object.keys(missedWords).map(Number);
-  if (!ids.length) { showToast('間違えた単語がありません'); return; }
-  showLoading('リスト復習準備中', '間違えた単語を読み込んでいます...');
-  shuffle(ids);
-  const words = [];
-  for (const id of ids.slice(0, 10)) { const w = await getWord(id); if (w) words.push(w); }
-  currentSession = { active:true, mode:'review', queue:words.map(w=>w.id), currentIdx:0, date:todayStr() };
-  await saveCurrentSession();
-  beginSession('review', words);
+  const totalMissed = Object.keys(missedWords).length;
+  if (totalMissed === 0) { showToast('間違えた単語がありません'); return; }
+
+  if (reviewCourse && reviewCourse.active) {
+    // バッチ進行中なら再開、そうでなければ次バッチへ
+    const hasBatch = reviewCourse.currentBatch &&
+                     reviewCourse.currentBatch.length > 0 &&
+                     reviewCourse.batchIdx < reviewCourse.currentBatch.length;
+    hasBatch ? await resumeReviewCourse() : await startNextReviewBatch();
+  } else {
+    // 新規コース作成
+    reviewCourse = { active: true, completedIds: [], currentBatch: [], batchIdx: 0 };
+    saveReviewCourse().catch(console.error);
+    await startNextReviewBatch();
+  }
+}
+
+// 次のバッチ（最大10問）を取得して出題
+async function startNextReviewBatch() {
+  if (!reviewCourse) return;
+  showLoading('リスト復習準備中', '間違えた単語を選んでいます...');
+
+  const allIds       = Object.keys(missedWords).map(Number);
+  const completedSet = new Set(reviewCourse.completedIds);
+  const remaining    = allIds.filter(id => !completedSet.has(id));
+
+  if (remaining.length === 0) {
+    // 全問完了
+    hideLoading();
+    await clearReviewCourse();
+    updateDataScreen();
+    showReviewComplete();
+    return;
+  }
+
+  shuffle(remaining);
+  const batchIds = remaining.slice(0, 10);
+  const words    = [];
+  for (const id of batchIds) { const w = await getWord(id); if (w) words.push(w); }
+
+  reviewCourse.currentBatch = words.map(w => w.id);
+  reviewCourse.batchIdx     = 0;
+  saveReviewCourse().catch(console.error);
+
   hideLoading();
+  beginSession('reviewCourse', words);
+}
+
+// 中断中のバッチを再開
+async function resumeReviewCourse() {
+  if (!reviewCourse) return;
+  showLoading('リスト復習再開中', '...');
+  const remainingIds = reviewCourse.currentBatch.slice(reviewCourse.batchIdx);
+  const words = [];
+  for (const id of remainingIds) { const w = await getWord(id); if (w) words.push(w); }
+  if (!words.length) { hideLoading(); await startNextReviewBatch(); return; }
+  hideLoading();
+  beginSession('reviewCourse', words, true);
+}
+
+// リスト復習完了画面
+function showReviewComplete() {
+  document.getElementById('result-header').innerHTML =
+    `<div class="congrats-text">🎉 リスト復習完了！</div>
+     <div class="result-subtitle">全ての間違えた単語を復習しました</div>`;
+  document.getElementById('result-wrong-section').style.display  = 'none';
+  document.getElementById('result-correct-list').innerHTML       = '';
+  document.getElementById('btn-retry').style.display             = 'none';
+  document.getElementById('btn-next').style.display              = 'none';
+  document.getElementById('btn-complete').style.display          = '';
+  document.getElementById('btn-home-result').style.display       = '';
+  showScreen('result');
 }
 
 // ---- セッション共通開始 ----
@@ -812,9 +942,19 @@ function handleCorrect() {
   }
   if (studyMode === 'review') {
     reduceMissed(currentWord.id);
-    saveMissed().catch(console.error);         // バックグラウンド
+    saveMissed().catch(console.error);
   }
-  saveProgress().catch(console.error);         // バックグラウンド
+  if (studyMode === 'reviewCourse' && reviewCourse) {
+    // 今日やった単語はカウントを減らさない（昨日以前のみ reduceMissed）
+    const entry = missedWords[String(currentWord.id)];
+    if (entry && entry.lastDate < todayStr()) reduceMissed(currentWord.id);
+    if (!reviewCourse.completedIds.includes(currentWord.id))
+      reviewCourse.completedIds.push(currentWord.id);
+    reviewCourse.batchIdx++;
+    saveMissed().catch(console.error);
+    saveReviewCourse().catch(console.error);
+  }
+  saveProgress().catch(console.error);
 }
 
 async function markCorrect() {
@@ -848,14 +988,31 @@ async function onWrongBtn() {
   isShowingWrong = true;
 
   sessionResults.wrong.push(currentWord);
-  if (studyMode === 'review') increaseMissed(currentWord.id);
-  else                        recordMissed(currentWord.id);
-  saveMissed().catch(console.error);           // バックグラウンド
+  let needSaveMissed = false;
+  if (studyMode === 'review') {
+    increaseMissed(currentWord.id);
+    needSaveMissed = true;
+  } else if (studyMode === 'reviewCourse') {
+    // 昨日以前の単語はカウント増加、今日の単語はそのまま
+    const entry = missedWords[String(currentWord.id)];
+    if (entry && entry.lastDate < todayStr()) {
+      increaseMissed(currentWord.id);
+      needSaveMissed = true;
+    }
+    if (reviewCourse) {
+      reviewCourse.batchIdx++;
+      saveReviewCourse().catch(console.error);
+    }
+  } else {
+    recordMissed(currentWord.id);
+    needSaveMissed = true;
+  }
+  if (needSaveMissed) saveMissed().catch(console.error);
 
-  // カスタムモード: 不正解でもbatchIdx進める（completedIdsには入れない）
+  // カスタムモード: 不正解でもbatchIdx進める
   if (studyMode === 'custom' && customCourse) {
     customCourse.batchIdx++;
-    saveCustomCourse().catch(console.error);   // バックグラウンド
+    saveCustomCourse().catch(console.error);
   }
 
   clearTimeout(wrongDismissTimer);
@@ -948,13 +1105,26 @@ function showResultScreen() {
   const btnComplete = document.getElementById('btn-complete');
 
   if (isCustom) {
-    // カスタム: 間違いあり→もう一度解く / 全正解→次のバッチへ(Next)
+    // カスタム: 間違いあり→もう一度解く / 全正解→Next
     btnRetry.style.display    = allOK ? 'none' : '';
     btnComplete.style.display = 'none';
     btnNext.style.display     = allOK ? '' : 'none';
     if (allOK && customCourse) {
       const remaining = customCourse.totalInRange - customCourse.completedIds.length;
       btnNext.textContent = remaining > 0 ? `Next → (残り${remaining}問)` : 'Next →';
+    } else {
+      btnNext.textContent = 'Next →';
+    }
+  } else if (studyMode === 'reviewCourse') {
+    // リスト復習コース: 間違いあり→もう一度 / 全正解→次バッチ
+    btnRetry.style.display    = allOK ? 'none' : '';
+    btnComplete.style.display = 'none';
+    btnNext.style.display     = allOK ? '' : 'none';
+    if (allOK && reviewCourse) {
+      const allIds  = Object.keys(missedWords).map(Number);
+      const doneSet = new Set(reviewCourse.completedIds);
+      const rem     = allIds.filter(id => !doneSet.has(id)).length;
+      btnNext.textContent = rem > 0 ? `Next → (残り${rem}問)` : 'Next →';
     } else {
       btnNext.textContent = 'Next →';
     }
@@ -984,8 +1154,9 @@ function retrySession() {
 
 async function nextSession() {
   if (studyMode === 'custom') {
-    // カスタムコース: 次のバッチへ
     await startNextCustomBatch();
+  } else if (studyMode === 'reviewCourse') {
+    await startNextReviewBatch();
   } else {
     updateMainMenu();
     showScreen('main');
@@ -1130,6 +1301,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Data
   document.getElementById('btn-review-from-list').addEventListener('click', startReviewFromList);
+  document.getElementById('btn-review-course-cancel').addEventListener('click', async e => {
+    e.stopPropagation();
+    await clearReviewCourse();
+    updateDataScreen();
+    showToast('リスト復習コースを終了しました');
+  });
 
   // Study
   document.getElementById('answer-input').addEventListener('keydown', e => {
@@ -1166,10 +1343,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // 離脱時の保険保存
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden' && currentUser) {
-      saveCurrentSession(); saveProgress(); saveCustomCourse();
+      saveCurrentSession(); saveProgress(); saveCustomCourse(); saveReviewCourse();
     }
   });
   window.addEventListener('pagehide', () => {
-    if (currentUser) { saveCurrentSession(); saveProgress(); saveCustomCourse(); }
+    if (currentUser) { saveCurrentSession(); saveProgress(); saveCustomCourse(); saveReviewCourse(); }
   });
 });
