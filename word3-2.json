@@ -210,7 +210,7 @@
   {"word":"swift","pos":"形","meaning":"素早い"},
   {"word":"mighty","pos":"形","meaning":"力強い"},
   {"word":"explicit","pos":"形","meaning":"明確な"},
-　{"word":"authentic","pos":"形","meaning":"本物の（人工的に作ったものではない）"},
+  {"word":"authentic","pos":"形","meaning":"本物の（人工的に作ったものではない）"},
   {"word":"wit","pos":"名","meaning":"気の利いたことを言う能力"},
   {"word":"thrive","pos":"動","meaning":"順調である（状況がよくなっている）"},
   {"word":"dim","pos":"形","meaning":"薄暗い（明るさが）"},
@@ -367,7 +367,7 @@
   {"word":"intimate","pos":"形","meaning":"親密な"},
   {"word":"aesthetic","pos":"形","meaning":"美に関する"},
   {"word":"conscience","pos":"名","meaning":"良心"},
-  {"word":"mercy","pos":"名","meaning":"情け"}
+  {"word":"mercy","pos":"名","meaning":"情け"},
   {"word":"compassion","pos":"名","meaning":"同情"},
   {"word":"impulse","pos":"名","meaning":"衝動"},
   {"word":"aspiration","pos":"名","meaning":"熱望"},
