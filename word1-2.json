@@ -1,5 +1,4 @@
-[
-  {"word":"agree","pos":"動","meaning":"賛成する"},
+[ {"word":"agree","pos":"動","meaning":"賛成する"},
   {"word":"oppose O","pos":"動","meaning":"Oに反対する"},
   {"word":"advise O","pos":"動","meaning":"Oに忠告する"},
   {"word":"tip","pos":"名","meaning":"助言"},
@@ -798,5 +797,4 @@
   {"word":"valid","pos":"形","meaning":"有効な"},
   {"word":"rare","pos":"形","meaning":"珍しい"},
   {"word":"casual","pos":"形","meaning":"気楽な"},
-  {"word":"available","pos":"形","meaning":"利用できる"}
-]
+  {"word":"available","pos":"形","meaning":"利用できる"} ]
