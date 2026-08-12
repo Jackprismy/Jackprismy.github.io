@@ -404,7 +404,7 @@
   {"word":"insist on O","pos":"動","meaning":"Oを主張する"},
   {"word":"object to O","pos":"動","meaning":"Oに反対する"},
   {"word":"protest","pos":"動","meaning":"抗議する"},
-  {"word":"controversial","pos":"形","meaning":"物議を引き起こす"},
+  {"word":"controversial","pos":"動","meaning":"物議を引き起こす"},
   {"word":"be bound to V","pos":"形","meaning":"Vすることになっている"},
   {"word":"bet O","pos":"動","meaning":"Oをかける（お金とか）"},
   {"word":"demand O","pos":"動","meaning":"Oを要求する"},
