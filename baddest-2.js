@@ -945,13 +945,11 @@ function handleCorrect() {
     saveMissed().catch(console.error);
   }
   if (studyMode === 'reviewCourse' && reviewCourse) {
-    // 今日やった単語はカウントを減らさない（昨日以前のみ reduceMissed）
-    const entry = missedWords[String(currentWord.id)];
-    if (entry && entry.lastDate < todayStr()) reduceMissed(currentWord.id);
+    // リスト復習で正解しても missedWords には一切触れない
+    // （リストから外さない・カウントも減らさない＝何もしない）
     if (!reviewCourse.completedIds.includes(currentWord.id))
       reviewCourse.completedIds.push(currentWord.id);
     reviewCourse.batchIdx++;
-    saveMissed().catch(console.error);
     saveReviewCourse().catch(console.error);
   }
   saveProgress().catch(console.error);
