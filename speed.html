@@ -45,9 +45,10 @@ input[type=file]{display:none;}
 }
 .row{
   display:flex; align-items:stretch; border-bottom:1px solid var(--line);
-  min-height:38px;
+  min-height:38px; cursor:pointer;
 }
 .row:last-child{border-bottom:none;}
+.row.learned{background:rgba(63,163,77,0.28);}
 .word-col{
   flex:1.1; padding:5px 8px; display:flex; align-items:center; gap:6px;
 }
@@ -150,6 +151,14 @@ let words = [
 ];
 let page = 0;
 
+// 押した単語を緑色にして「覚えた」状態を保存する(ブラウザのlocalStorageに保存)
+const LEARNED_KEY = 'eitango-learned-words';
+let learnedWords = new Set();
+try{ learnedWords = new Set(JSON.parse(localStorage.getItem(LEARNED_KEY) || '[]')); }catch(err){}
+function saveLearned(){
+  try{ localStorage.setItem(LEARNED_KEY, JSON.stringify([...learnedWords])); }catch(err){}
+}
+
 const listEl = document.getElementById('list');
 const progressEl = document.getElementById('progress');
 const prevBtn = document.getElementById('prevBtn');
@@ -174,7 +183,17 @@ function render(){
         <div class="meaning">${escapeHtml(w.meaning)}</div>
       </div>`;
     listEl.appendChild(row);
-    row.querySelector('.playBtn').addEventListener('click', ()=>speakWord(w.word));
+    row.querySelector('.playBtn').addEventListener('click', e=>{
+      e.stopPropagation();
+      speakWord(w.word);
+    });
+    if(learnedWords.has(w.word)) row.classList.add('learned');
+    row.addEventListener('click', e=>{
+      if(e.target.closest('.playBtn')) return;
+      if(learnedWords.has(w.word)){ learnedWords.delete(w.word); row.classList.remove('learned'); }
+      else{ learnedWords.add(w.word); row.classList.add('learned'); }
+      saveLearned();
+    });
   });
   layoutSheet();
   const total = words.length;
