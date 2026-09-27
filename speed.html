@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>英単語帳</title>
+<style>
+:root{
+  --bg:#1b1b1f; --card:#26262c; --text:#eee; --sub:#999;
+  --accent:#e0455a; --line:#3a3a42;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#f4f4f6; --card:#fff; --text:#222; --sub:#777; --line:#e2e2e6;
+  }
+}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;
+  display:flex; flex-direction:column; align-items:center; min-height:100%;
+  padding:8px 10px;
+}
+.wrap{width:100%; max-width:480px;}
+h1{font-size:1rem; text-align:center; margin:2px 0 6px;}
+.timer-top{
+  font-size:1rem; font-weight:600; color:var(--sub); text-align:center;
+  margin-bottom:6px;
+}
+.timer-top.low{color:var(--accent);}
+.toolbar{display:flex; gap:8px; margin-bottom:6px; align-items:center; justify-content:center; flex-wrap:wrap;}
+.toolbar label{
+  font-size:0.78rem; background:var(--card); border:1px solid var(--line);
+  padding:4px 8px; border-radius:8px; cursor:pointer;
+}
+input[type=file]{display:none;}
+.progress{font-size:0.8rem; color:var(--sub); text-align:center; margin-bottom:6px;}
+.card-list{
+  background:var(--card); border-radius:14px; overflow:hidden;
+  border:1px solid var(--line); position:relative;
+}
+.row{
+  display:flex; align-items:stretch; border-bottom:1px solid var(--line);
+  min-height:38px;
+}
+.row:last-child{border-bottom:none;}
+.word-col{
+  flex:1.1; padding:5px 8px; display:flex; align-items:center; gap:6px;
+}
+.word-text{display:flex; flex-direction:column; justify-content:center;}
+.word{font-size:0.92rem; font-weight:600;}
+.pos{font-size:0.68rem; color:var(--sub);}
+.playBtn{
+  width:24px; height:24px; min-width:24px; border-radius:50%;
+  border:1px solid var(--line); background:var(--bg); color:var(--text);
+  font-size:11px; display:flex; align-items:center; justify-content:center;
+  cursor:pointer;
+}
+.playBtn:active{opacity:.7;}
+.meaning-col{
+  flex:1; position:relative; border-left:1px solid var(--line);
+  display:flex; align-items:center; padding:5px 8px; overflow:hidden;
+}
+.meaning{font-size:0.88rem; color:#8a2c2c;}
+#redsheet{
+  position:fixed; left:0; top:0;
+  background:#7a2626;
+  box-shadow:0 6px 16px rgba(0,0,0,.4);
+  opacity:.92;
+  touch-action:none;
+  cursor:grab;
+  border-radius:6px;
+  z-index:10;
+}
+#redsheet:active{cursor:grabbing;}
+.nav{display:flex; justify-content:space-between; gap:8px; margin-top:8px; align-items:center;}
+button.nav-btn{
+  flex:1; padding:9px; border-radius:10px; border:1px solid var(--line);
+  background:var(--card); color:var(--text); font-size:0.88rem;
+}
+button.nav-btn:disabled{opacity:0.4;}
+.hint{font-size:0.7rem; color:var(--sub); text-align:center; margin-top:4px;}
+
+.page-screen{
+  position:fixed; inset:0; background:var(--bg); z-index:60;
+  padding:calc(12px + env(safe-area-inset-top,0px)) 12px calc(12px + env(safe-area-inset-bottom,0px));
+  overflow-y:auto;
+}
+.page-screen-header{
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:12px; font-size:1rem; font-weight:600;
+}
+.closeBtn{
+  width:30px; height:30px; border-radius:50%; border:1px solid var(--line);
+  background:var(--card); color:var(--text); font-size:14px;
+}
+.page-grid{
+  display:grid; grid-template-columns:repeat(4,1fr); gap:8px;
+}
+.page-btn{
+  padding:14px 4px; border-radius:10px; border:1px solid var(--line);
+  background:var(--card); color:var(--text); font-size:0.82rem;
+}
+.page-btn.current{border-color:var(--accent); color:var(--accent); font-weight:600;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>英単語帳</h1>
+  <div class="timer-top" id="timer"></div>
+  <div class="toolbar">
+    <label>JSON読み込み(複数可)<input type="file" id="fileInput" accept="application/json" multiple></label>
+  </div>
+  <div class="progress" id="progress"></div>
+  <div class="card-list" id="list"></div>
+  <div class="nav">
+    <button class="nav-btn" id="prevBtn">← 前の10問</button>
+    <button class="nav-btn" id="pageListBtn">一覧</button>
+    <button class="nav-btn" id="nextBtn">次の10問 →</button>
+  </div>
+  <div class="hint">赤いシートをドラッグして意味を確認できます</div>
+</div>
+<div id="redsheet"></div>
+
+<div class="page-screen" id="pageListScreen" style="display:none;">
+  <div class="page-screen-header">
+    <span>ページを選ぶ</span>
+    <button class="closeBtn" id="closePageList">✕</button>
+  </div>
+  <div class="page-grid" id="pageGrid"></div>
+</div>
+
+<script>
+const PAGE_SIZE = 10;
+let words = [
+  {word:"apple", pos:"n.", meaning:"りんご"},
+  {word:"run", pos:"v.", meaning:"走る"},
+  {word:"happy", pos:"adj.", meaning:"幸せな"},
+  {word:"quickly", pos:"adv.", meaning:"すばやく"},
+  {word:"decide", pos:"v.", meaning:"決める"},
+  {word:"beautiful", pos:"adj.", meaning:"美しい"},
+  {word:"journey", pos:"n.", meaning:"旅"},
+  {word:"improve", pos:"v.", meaning:"改善する"},
+  {word:"careful", pos:"adj.", meaning:"注意深い"},
+  {word:"suddenly", pos:"adv.", meaning:"突然に"}
+];
+let page = 0;
+
+const listEl = document.getElementById('list');
+const progressEl = document.getElementById('progress');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+
+function render(){
+  const start = page*PAGE_SIZE;
+  const slice = words.slice(start, start+PAGE_SIZE);
+  listEl.innerHTML = '';
+  slice.forEach(w=>{
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = `
+      <div class="word-col">
+        <button class="playBtn" aria-label="発音を再生">▶</button>
+        <div class="word-text">
+          <div class="word">${escapeHtml(w.word)}</div>
+          <div class="pos">${escapeHtml(w.pos||'')}</div>
+        </div>
+      </div>
+      <div class="meaning-col">
+        <div class="meaning">${escapeHtml(w.meaning)}</div>
+      </div>`;
+    listEl.appendChild(row);
+    row.querySelector('.playBtn').addEventListener('click', ()=>speakWord(w.word));
+  });
+  layoutSheet();
+  const total = words.length;
+  const last = Math.min(start+PAGE_SIZE, total);
+  progressEl.textContent = total ? `${start+1}-${last} / ${total}` : '単語がありません';
+  prevBtn.disabled = page===0;
+  nextBtn.disabled = last>=total;
+  updatePageSelect();
+  resetTimer();
+}
+
+function speakWord(word){
+  if(!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(word);
+  u.lang = 'en-US';
+  u.rate = 0.95;
+  window.speechSynthesis.speak(u);
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// 赤シート:意味欄(1ページ分すべて)をまとめて覆う、自由にドラッグできる1枚のシート
+const sheet = document.getElementById('redsheet');
+let posX = 0, posY = 0, sheetPlaced = false;
+
+function setPos(x, y){
+  posX = x; posY = y;
+  sheet.style.transform = `translate(${x}px, ${y}px)`;
+}
+
+function layoutSheet(){
+  const cols = listEl.querySelectorAll('.meaning-col');
+  if(!cols.length){ sheet.style.display='none'; return; }
+  sheet.style.display='block';
+  const first = cols[0].getBoundingClientRect();
+  const last = cols[cols.length-1].getBoundingClientRect();
+  sheet.style.width = first.width + 'px';
+  sheet.style.height = (last.bottom - first.top) + 'px';
+  if(!sheetPlaced){
+    setPos(first.left, first.top);
+    sheetPlaced = true;
+  }
+}
+
+let dragging=false, offX=0, offY=0;
+sheet.addEventListener('pointerdown', e=>{
+  dragging = true;
+  sheet.setPointerCapture(e.pointerId);
+  offX = e.clientX - posX;
+  offY = e.clientY - posY;
+});
+sheet.addEventListener('pointermove', e=>{
+  if(!dragging) return;
+  setPos(e.clientX - offX, e.clientY - offY);
+});
+function endDrag(){ dragging=false; }
+sheet.addEventListener('pointerup', endDrag);
+sheet.addEventListener('pointercancel', endDrag);
+window.addEventListener('resize', ()=>{ sheetPlaced=false; layoutSheet(); });
+
+const pageGrid = document.getElementById('pageGrid');
+const pageListScreen = document.getElementById('pageListScreen');
+const pageListBtn = document.getElementById('pageListBtn');
+const closePageList = document.getElementById('closePageList');
+
+function updatePageSelect(){
+  const totalPages = Math.max(1, Math.ceil(words.length/PAGE_SIZE));
+  pageGrid.innerHTML = '';
+  for(let i=0;i<totalPages;i++){
+    const s = i*PAGE_SIZE+1, e = Math.min((i+1)*PAGE_SIZE, words.length);
+    const btn = document.createElement('button');
+    btn.className = 'page-btn' + (i===page ? ' current' : '');
+    btn.textContent = `${s}-${e}`;
+    btn.addEventListener('click', ()=>{
+      page = i;
+      sheetPlaced = false;
+      render();
+      pageListScreen.style.display = 'none';
+    });
+    pageGrid.appendChild(btn);
+  }
+}
+pageListBtn.addEventListener('click', ()=>{
+  updatePageSelect();
+  pageListScreen.style.display = 'block';
+});
+closePageList.addEventListener('click', ()=>{
+  pageListScreen.style.display = 'none';
+});
+
+// 1ページ10秒のタイマー(ページが変わるたびリセット)
+const timerEl = document.getElementById('timer');
+let timerInterval = null, timeLeft = 10;
+function resetTimer(){
+  clearInterval(timerInterval);
+  timeLeft = 10;
+  updateTimerDisplay();
+  timerInterval = setInterval(()=>{
+    timeLeft--;
+    if(timeLeft<=0){ timeLeft=0; clearInterval(timerInterval); }
+    updateTimerDisplay();
+  }, 1000);
+}
+function updateTimerDisplay(){
+  timerEl.textContent = `残り ${timeLeft} 秒`;
+  timerEl.classList.toggle('low', timeLeft<=3);
+}
+
+document.getElementById('fileInput').addEventListener('change', function(e){
+  const files = Array.from(e.target.files);
+  if(!files.length) return;
+  // word1-2.json, word2-2.json ... のようなファイル名は数値部分で自然順にソート
+  files.sort((a,b)=>{
+    const na = (a.name.match(/\d+/g)||[]).map(Number);
+    const nb = (b.name.match(/\d+/g)||[]).map(Number);
+    for(let i=0;i<Math.max(na.length,nb.length);i++){
+      const va = na[i]??0, vb = nb[i]??0;
+      if(va!==vb) return va-vb;
+    }
+    return a.name.localeCompare(b.name);
+  });
+  const readOne = file => new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = evt=>{
+      try{
+        const data = JSON.parse(evt.target.result);
+        const arr = Array.isArray(data) ? data : data.words;
+        if(!Array.isArray(arr)) throw new Error('形式が不正です');
+        resolve(arr);
+      }catch(err){ reject(new Error(`${file.name}: ${err.message}`)); }
+    };
+    reader.onerror = ()=>reject(new Error(`${file.name}: 読み込みエラー`));
+    reader.readAsText(file);
+  });
+  Promise.all(files.map(readOne)).then(lists=>{
+    words = lists.flat();
+    page = 0;
+    sheetPlaced = false;
+    render();
+  }).catch(err=>{
+    alert('JSONの読み込みに失敗しました: '+err.message);
+  });
+});
+
+prevBtn.addEventListener('click', ()=>{ if(page>0){ page--; sheetPlaced=false; render(); }});
+nextBtn.addEventListener('click', ()=>{ if((page+1)*PAGE_SIZE<words.length){ page++; sheetPlaced=false; render(); }});
+
+render();
+</script>
+</body>
+</html>
