@@ -138,18 +138,37 @@ button.nav-btn:disabled{opacity:0.4;}
 
 <script>
 const PAGE_SIZE = 10;
-let words = [
-  {word:"apple", pos:"n.", meaning:"りんご"},
-  {word:"run", pos:"v.", meaning:"走る"},
-  {word:"happy", pos:"adj.", meaning:"幸せな"},
-  {word:"quickly", pos:"adv.", meaning:"すばやく"},
-  {word:"decide", pos:"v.", meaning:"決める"},
-  {word:"beautiful", pos:"adj.", meaning:"美しい"},
-  {word:"journey", pos:"n.", meaning:"旅"},
-  {word:"improve", pos:"v.", meaning:"改善する"},
-  {word:"careful", pos:"adj.", meaning:"注意深い"},
-  {word:"suddenly", pos:"adv.", meaning:"突然に"}
-];
+// 単語データはファイルごとに区切って保持する({label, words}の配列)
+let sourceFiles = [{
+  label: 'サンプル単語',
+  words: [
+    {word:"apple", pos:"n.", meaning:"りんご"},
+    {word:"run", pos:"v.", meaning:"走る"},
+    {word:"happy", pos:"adj.", meaning:"幸せな"},
+    {word:"quickly", pos:"adv.", meaning:"すばやく"},
+    {word:"decide", pos:"v.", meaning:"決める"},
+    {word:"beautiful", pos:"adj.", meaning:"美しい"},
+    {word:"journey", pos:"n.", meaning:"旅"},
+    {word:"improve", pos:"v.", meaning:"改善する"},
+    {word:"careful", pos:"adj.", meaning:"注意深い"},
+    {word:"suddenly", pos:"adv.", meaning:"突然に"}
+  ]
+}];
+// sourceFilesから、ファイルをまたがない10語区切りのページ一覧を作る
+let allPages = [];
+function rebuildPages(){
+  allPages = [];
+  sourceFiles.forEach(sf=>{
+    const n = sf.words.length;
+    const pageCount = Math.max(1, Math.ceil(n/PAGE_SIZE));
+    for(let i=0;i<pageCount;i++){
+      const s = i*PAGE_SIZE, e = Math.min(s+PAGE_SIZE, n);
+      allPages.push({ label: sf.label, localStart: s+1, localEnd: e, words: sf.words.slice(s, e) });
+    }
+  });
+  if(!allPages.length) allPages.push({label:'', localStart:0, localEnd:0, words:[]});
+}
+rebuildPages();
 let page = 0;
 
 // 押した単語を緑色にして「覚えた」状態を保存する(ブラウザのlocalStorageに保存)
@@ -166,8 +185,10 @@ const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
 
 function render(){
-  const start = page*PAGE_SIZE;
-  const slice = words.slice(start, start+PAGE_SIZE);
+  if(page >= allPages.length) page = allPages.length-1;
+  if(page < 0) page = 0;
+  const cur = allPages[page];
+  const slice = cur.words;
   listEl.innerHTML = '';
   slice.forEach(w=>{
     const row = document.createElement('div');
@@ -197,11 +218,12 @@ function render(){
     });
   });
   layoutSheet();
-  const total = words.length;
-  const last = Math.min(start+PAGE_SIZE, total);
-  progressEl.textContent = total ? `${start+1}-${last} / ${total}` : '単語がありません';
+  const totalWords = sourceFiles.reduce((a,f)=>a+f.words.length, 0);
+  progressEl.textContent = totalWords
+    ? `${cur.label} ${cur.localStart}-${cur.localEnd}`
+    : '単語がありません';
   prevBtn.disabled = page===0;
-  nextBtn.disabled = last>=total;
+  nextBtn.disabled = page>=allPages.length-1;
   updatePageSelect();
   resetTimer();
 }
@@ -265,19 +287,16 @@ const closePageList = document.getElementById('closePageList');
 const backPageList = document.getElementById('backPageList');
 const pageListTitle = document.getElementById('pageListTitle');
 
-const GROUP_SIZE = 10; // 1グループ = 10ページ(100語)
-let pageListView = 'flat'; // 'flat' | 'groups' | 'pages'
-let currentGroup = 0;
+let pageListView = 'flat'; // 'flat' | 'files' | 'pages'
+let currentFileLabel = '';
 
-function totalPagesCount(){ return Math.max(1, Math.ceil(words.length/PAGE_SIZE)); }
-
-function renderPageBtns(startPage, endPage){
+function renderPageBtnsForIndices(indices){
   pageGrid.innerHTML = '';
-  for(let i=startPage;i<endPage;i++){
-    const s = i*PAGE_SIZE+1, e = Math.min((i+1)*PAGE_SIZE, words.length);
+  indices.forEach(i=>{
+    const p = allPages[i];
     const btn = document.createElement('button');
     btn.className = 'page-btn' + (i===page ? ' current' : '');
-    btn.textContent = `${s}-${e}`;
+    btn.textContent = `${p.localStart}-${p.localEnd}`;
     btn.addEventListener('click', ()=>{
       page = i;
       sheetPlaced = false;
@@ -285,61 +304,52 @@ function renderPageBtns(startPage, endPage){
       pageListScreen.style.display = 'none';
     });
     pageGrid.appendChild(btn);
-  }
+  });
 }
 
-function renderGroupBtns(){
-  const totalPages = totalPagesCount();
-  const totalGroups = Math.ceil(totalPages/GROUP_SIZE);
+function renderFileBtns(){
   pageGrid.innerHTML = '';
-  for(let g=0; g<totalGroups; g++){
-    const startPage = g*GROUP_SIZE;
-    const endPage = Math.min((g+1)*GROUP_SIZE, totalPages);
-    const s = startPage*PAGE_SIZE+1, e = Math.min(endPage*PAGE_SIZE, words.length);
+  sourceFiles.forEach(sf=>{
+    const isCurrentFile = allPages[page] && allPages[page].label === sf.label;
     const btn = document.createElement('button');
-    const containsCurrent = page>=startPage && page<endPage;
-    btn.className = 'page-btn' + (containsCurrent ? ' current' : '');
-    btn.textContent = `${s}-${e}`;
+    btn.className = 'page-btn' + (isCurrentFile ? ' current' : '');
+    btn.textContent = `${sf.label} (${sf.words.length}語)`;
     btn.addEventListener('click', ()=>{
-      currentGroup = g;
+      currentFileLabel = sf.label;
       pageListView = 'pages';
       openPageList();
     });
     pageGrid.appendChild(btn);
-  }
+  });
 }
 
 function openPageList(){
-  const totalPages = totalPagesCount();
-  if(totalPages <= GROUP_SIZE){
+  if(sourceFiles.length <= 1){
     pageListView = 'flat';
   }
   if(pageListView === 'flat'){
     pageListTitle.textContent = 'ページを選ぶ';
     backPageList.style.display = 'none';
-    renderPageBtns(0, totalPages);
-  }else if(pageListView === 'groups'){
-    pageListTitle.textContent = 'ページを選ぶ';
+    renderPageBtnsForIndices(allPages.map((_,i)=>i));
+  }else if(pageListView === 'files'){
+    pageListTitle.textContent = 'ファイルを選ぶ';
     backPageList.style.display = 'none';
-    renderGroupBtns();
+    renderFileBtns();
   }else{
-    const startPage = currentGroup*GROUP_SIZE;
-    const endPage = Math.min((currentGroup+1)*GROUP_SIZE, totalPages);
-    const s = startPage*PAGE_SIZE+1, e = Math.min(endPage*PAGE_SIZE, words.length);
-    pageListTitle.textContent = `${s}-${e}`;
+    pageListTitle.textContent = currentFileLabel;
     backPageList.style.display = 'inline-block';
-    renderPageBtns(startPage, endPage);
+    const indices = allPages.map((p,i)=>i).filter(i=>allPages[i].label===currentFileLabel);
+    renderPageBtnsForIndices(indices);
   }
   pageListScreen.style.display = 'block';
 }
 
 pageListBtn.addEventListener('click', ()=>{
-  const totalPages = totalPagesCount();
-  pageListView = totalPages > GROUP_SIZE ? 'groups' : 'flat';
+  pageListView = sourceFiles.length > 1 ? 'files' : 'flat';
   openPageList();
 });
 backPageList.addEventListener('click', ()=>{
-  pageListView = 'groups';
+  pageListView = 'files';
   openPageList();
 });
 closePageList.addEventListener('click', ()=>{
@@ -397,9 +407,10 @@ document.getElementById('fileInput').addEventListener('change', function(e){
     reader.readAsText(file);
   });
   Promise.all(files.map(readOne)).then(lists=>{
-    words = lists.flat();
+    sourceFiles = files.map((f,i)=>({ label: f.name, words: lists[i] }));
     page = 0;
     sheetPlaced = false;
+    rebuildPages();
     render();
   }).catch(err=>{
     alert('JSONの読み込みに失敗しました: '+err.message);
@@ -407,9 +418,9 @@ document.getElementById('fileInput').addEventListener('change', function(e){
 });
 
 prevBtn.addEventListener('click', ()=>{ if(page>0){ page--; sheetPlaced=false; render(); }});
-nextBtn.addEventListener('click', ()=>{ if((page+1)*PAGE_SIZE<words.length){ page++; sheetPlaced=false; render(); }});
+nextBtn.addEventListener('click', ()=>{ if(page<allPages.length-1){ page++; sheetPlaced=false; render(); }});
 
-// 起動時に同じフォルダの word1-2.json, word2-2.json ... を連番で自動取得して結合する
+// 起動時に同じフォルダの word1-2.json, word2-2.json ... を連番で自動取得して結合する(ファイルごとに区切って保持)
 async function autoLoadFromFolder(){
   progressEl.textContent = '単語ファイルを探しています…';
   const collected = [];
@@ -423,12 +434,13 @@ async function autoLoadFromFolder(){
     try{ data = await res.json(); }catch(err){ break; }
     const arr = Array.isArray(data) ? data : data.words;
     if(!Array.isArray(arr)) break;
-    collected.push(arr);
+    collected.push({ label: `word${n}-2.json`, words: arr });
   }
   if(collected.length){
-    words = collected.flat();
+    sourceFiles = collected;
     page = 0;
     sheetPlaced = false;
+    rebuildPages();
   }
   render();
 }
