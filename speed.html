@@ -103,10 +103,22 @@ button.nav-btn:disabled{opacity:0.4;}
   display:grid; grid-template-columns:repeat(4,1fr); gap:8px;
 }
 .page-btn{
+  position:relative; overflow:hidden;
   padding:14px 4px; border-radius:10px; border:1px solid var(--line);
   background:var(--card); color:var(--text); font-size:0.82rem;
 }
 .page-btn.current{border-color:var(--accent); color:var(--accent); font-weight:600;}
+.page-btn .fill{
+  position:absolute; left:0; right:0; bottom:0; z-index:0;
+  background:linear-gradient(180deg, rgba(90,200,120,0.85), rgba(46,150,80,0.9));
+  border-radius:0 0 9px 9px;
+  transition:height .35s ease;
+}
+.page-btn .fill::before{
+  content:''; position:absolute; top:-3px; left:0; right:0; height:6px;
+  background:rgba(150,230,170,0.55); border-radius:50%/6px;
+}
+.page-btn .label{position:relative; z-index:1; text-shadow:0 1px 2px rgba(0,0,0,.45);}
 </style>
 </head>
 <body>
@@ -290,13 +302,20 @@ const pageListTitle = document.getElementById('pageListTitle');
 let pageListView = 'flat'; // 'flat' | 'files' | 'pages'
 let currentFileLabel = '';
 
+function learnedRatio(wordList){
+  if(!wordList.length) return 0;
+  const n = wordList.filter(w=>learnedWords.has(w.word)).length;
+  return Math.round(n/wordList.length*100);
+}
+
 function renderPageBtnsForIndices(indices){
   pageGrid.innerHTML = '';
   indices.forEach(i=>{
     const p = allPages[i];
+    const pct = learnedRatio(p.words);
     const btn = document.createElement('button');
     btn.className = 'page-btn' + (i===page ? ' current' : '');
-    btn.textContent = `${p.localStart}-${p.localEnd}`;
+    btn.innerHTML = `<span class="fill" style="height:${pct}%"></span><span class="label">${p.localStart}-${p.localEnd}</span>`;
     btn.addEventListener('click', ()=>{
       page = i;
       sheetPlaced = false;
@@ -311,9 +330,10 @@ function renderFileBtns(){
   pageGrid.innerHTML = '';
   sourceFiles.forEach(sf=>{
     const isCurrentFile = allPages[page] && allPages[page].label === sf.label;
+    const pct = learnedRatio(sf.words);
     const btn = document.createElement('button');
     btn.className = 'page-btn' + (isCurrentFile ? ' current' : '');
-    btn.textContent = `${sf.label} (${sf.words.length}語)`;
+    btn.innerHTML = `<span class="fill" style="height:${pct}%"></span><span class="label">${sf.label} (${sf.words.length}語)</span>`;
     btn.addEventListener('click', ()=>{
       currentFileLabel = sf.label;
       pageListView = 'pages';
