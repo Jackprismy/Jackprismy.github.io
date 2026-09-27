@@ -325,7 +325,30 @@ document.getElementById('fileInput').addEventListener('change', function(e){
 prevBtn.addEventListener('click', ()=>{ if(page>0){ page--; sheetPlaced=false; render(); }});
 nextBtn.addEventListener('click', ()=>{ if((page+1)*PAGE_SIZE<words.length){ page++; sheetPlaced=false; render(); }});
 
-render();
+// 起動時に同じフォルダの word1-2.json, word2-2.json ... を連番で自動取得して結合する
+async function autoLoadFromFolder(){
+  progressEl.textContent = '単語ファイルを探しています…';
+  const collected = [];
+  for(let n=1; n<=200; n++){
+    let res;
+    try{
+      res = await fetch(`word${n}-2.json`, {cache:'no-store'});
+    }catch(err){ break; }
+    if(!res.ok) break;
+    let data;
+    try{ data = await res.json(); }catch(err){ break; }
+    const arr = Array.isArray(data) ? data : data.words;
+    if(!Array.isArray(arr)) break;
+    collected.push(arr);
+  }
+  if(collected.length){
+    words = collected.flat();
+    page = 0;
+    sheetPlaced = false;
+  }
+  render();
+}
+autoLoadFromFolder();
 </script>
 </body>
 </html>
