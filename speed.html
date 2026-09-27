@@ -129,7 +129,8 @@ button.nav-btn:disabled{opacity:0.4;}
 
 <div class="page-screen" id="pageListScreen" style="display:none;">
   <div class="page-screen-header">
-    <span>ページを選ぶ</span>
+    <button class="closeBtn" id="backPageList" style="display:none;">←</button>
+    <span id="pageListTitle">ページを選ぶ</span>
     <button class="closeBtn" id="closePageList">✕</button>
   </div>
   <div class="page-grid" id="pageGrid"></div>
@@ -261,11 +262,18 @@ const pageGrid = document.getElementById('pageGrid');
 const pageListScreen = document.getElementById('pageListScreen');
 const pageListBtn = document.getElementById('pageListBtn');
 const closePageList = document.getElementById('closePageList');
+const backPageList = document.getElementById('backPageList');
+const pageListTitle = document.getElementById('pageListTitle');
 
-function updatePageSelect(){
-  const totalPages = Math.max(1, Math.ceil(words.length/PAGE_SIZE));
+const GROUP_SIZE = 10; // 1グループ = 10ページ(100語)
+let pageListView = 'flat'; // 'flat' | 'groups' | 'pages'
+let currentGroup = 0;
+
+function totalPagesCount(){ return Math.max(1, Math.ceil(words.length/PAGE_SIZE)); }
+
+function renderPageBtns(startPage, endPage){
   pageGrid.innerHTML = '';
-  for(let i=0;i<totalPages;i++){
+  for(let i=startPage;i<endPage;i++){
     const s = i*PAGE_SIZE+1, e = Math.min((i+1)*PAGE_SIZE, words.length);
     const btn = document.createElement('button');
     btn.className = 'page-btn' + (i===page ? ' current' : '');
@@ -279,13 +287,70 @@ function updatePageSelect(){
     pageGrid.appendChild(btn);
   }
 }
-pageListBtn.addEventListener('click', ()=>{
-  updatePageSelect();
+
+function renderGroupBtns(){
+  const totalPages = totalPagesCount();
+  const totalGroups = Math.ceil(totalPages/GROUP_SIZE);
+  pageGrid.innerHTML = '';
+  for(let g=0; g<totalGroups; g++){
+    const startPage = g*GROUP_SIZE;
+    const endPage = Math.min((g+1)*GROUP_SIZE, totalPages);
+    const s = startPage*PAGE_SIZE+1, e = Math.min(endPage*PAGE_SIZE, words.length);
+    const btn = document.createElement('button');
+    const containsCurrent = page>=startPage && page<endPage;
+    btn.className = 'page-btn' + (containsCurrent ? ' current' : '');
+    btn.textContent = `${s}-${e}`;
+    btn.addEventListener('click', ()=>{
+      currentGroup = g;
+      pageListView = 'pages';
+      openPageList();
+    });
+    pageGrid.appendChild(btn);
+  }
+}
+
+function openPageList(){
+  const totalPages = totalPagesCount();
+  if(totalPages <= GROUP_SIZE){
+    pageListView = 'flat';
+  }
+  if(pageListView === 'flat'){
+    pageListTitle.textContent = 'ページを選ぶ';
+    backPageList.style.display = 'none';
+    renderPageBtns(0, totalPages);
+  }else if(pageListView === 'groups'){
+    pageListTitle.textContent = 'ページを選ぶ';
+    backPageList.style.display = 'none';
+    renderGroupBtns();
+  }else{
+    const startPage = currentGroup*GROUP_SIZE;
+    const endPage = Math.min((currentGroup+1)*GROUP_SIZE, totalPages);
+    const s = startPage*PAGE_SIZE+1, e = Math.min(endPage*PAGE_SIZE, words.length);
+    pageListTitle.textContent = `${s}-${e}`;
+    backPageList.style.display = 'inline-block';
+    renderPageBtns(startPage, endPage);
+  }
   pageListScreen.style.display = 'block';
+}
+
+pageListBtn.addEventListener('click', ()=>{
+  const totalPages = totalPagesCount();
+  pageListView = totalPages > GROUP_SIZE ? 'groups' : 'flat';
+  openPageList();
+});
+backPageList.addEventListener('click', ()=>{
+  pageListView = 'groups';
+  openPageList();
 });
 closePageList.addEventListener('click', ()=>{
   pageListScreen.style.display = 'none';
 });
+
+function updatePageSelect(){
+  // ページ一覧が開いている間に単語データが変わった場合に備え、開いていれば再描画
+  if(pageListScreen.style.display === 'block') openPageList();
+}
+
 
 // 1ページ10秒のタイマー(ページが変わるたびリセット)
 const timerEl = document.getElementById('timer');
